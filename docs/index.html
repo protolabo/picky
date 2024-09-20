@@ -58,23 +58,74 @@
             <h2>Description du projet</h2>
             
             <p>
-                <!-- TODO: Décrire le contexte dans lequel s'inscrit le projet -->
+                Avec l'évolution du web et l'abondance d'informations disponibles, il est devenu essentiel pour les utilisateurs de pouvoir extraire et traiter des données tabulaires rapidement. Les tableaux intégrés dans les pages web peuvent être affichés de différentes manières : certains sont directement codés en HTML, tandis que d'autres peuvent être intégrés sous forme d'images ou générés dynamiquement par JavaScript. Cette diversité rend l'utilisation d'outils de parsing traditionnels difficile et souvent inefficace.
             </p>
 
             <p>
-                <!-- TODO: Décrire la problématique/motivation du projet -->
+                Les utilisateurs se retrouvent souvent à copier manuellement des tableaux à partir de sites web ou à devoir transcrire des données à partir de captures d'écran, ce qui est fastidieux et sujet à des erreurs. Il n'existe pas d'outil accessible et intuitif permettant à la fois d'extraire ces données rapidement et de les personnaliser selon les besoins. De plus, bien que certaines solutions existent pour l'extraction de données tabulaires, elles sont souvent complexes, incomplètes ou limités dans leur flexibilité, rendant l'expérience utilisateur peu agréable.
             </p>		
 
             <p>
-                <!-- TODO: Décrire la proposition -->
+                Picky est une extension de navigateur web conçue pour faciliter l'extraction de données tabulaires. Elle prend en charge la conversion de tableaux (provenant de captures d'écran) présents sur une page web en divers formats d'export, tels que CSV ou JSON. Les données extraites peuvent être filtrées ou modifiées (sans ajout) pour plus de flexibilité et une meilleure interopérabilité avec les clients potentiels. Picky utilise des techniques de traitement d'image et de traitement du langage naturel (NLP) pour améliorer la précision et la qualité des résultats.
             </p>
         </header>
 
         
         <section class="content-wrapper">
             <h2>Exigences</h2>
-
-            <!-- TODO: Décrire les exigences du projet (fonctionnalités, contraintes) -->
+            <h3>Besoins fonctionnels:</h3>
+                <ul>
+                    <li><b>Extraction de tableaux depuis une page web :</b>
+                        <ul>
+                            <li>L'utilisateur doit pouvoir sélectionner un tableau à partir de l'interface de la page web pour l'extraction.</li>
+                        </ul>
+                    </li>
+                    <li><b>Prétraitement des images :</b>
+                        <ul>
+                            <li>L'application doit inclure un prétraitement d'image pour assurer une meilleure lisibilité des données capturées.</li>
+                        </ul>
+                    </li>
+                    <li><b>Modification des données extraites :</b>
+                        <ul>
+                            <li>Une interface doit permettre de modifier facilement les données extraites (supprimer ou modifier les lignes/colonnes).</li>
+                        </ul>
+                    </li>
+                    <li><b>Exportation flexible :</b>
+                        <ul>
+                            <li>Les données modifiées ou filtrées doivent pouvoir être exportées dans différents formats, tels que CSV et JSON.</li>
+                        </ul>
+                    </li>
+                    <li><b>Gestion des formats de tableaux divers :</b>
+                        <ul>
+                            <li>L'extension doit être capable de traiter plusieurs types de tableaux HTML, y compris ceux avec des styles personnalisés ou des structures imbriquées.</li>
+                        </ul>
+                    </li>
+                    <li><b>Interface utilisateur intuitive :</b>
+                        <ul>
+                            <li>L'interface doit être simple et intuitive, permettant à l'utilisateur de gérer toutes les fonctionnalités (sélection, modification, exportation) sans difficulté.</li>
+                            <li>Un système d'aperçu des données doit être proposé avant l'exportation.</li>
+                        </ul>
+                    </li>
+                </ul>
+                
+            <h3>Besoins Non Fonctionnels :</h3>
+                <ul>
+                    <li><b>Performance et rapidité :</b>
+                        <ul>
+                            <li>L'extension doit fonctionner rapidement.</li>
+                        </ul>
+                    </li>
+                    <li><b>Facilité d'utilisation :</b>
+                        <ul>
+                            <li>Aucune compétence technique ne doit être requise pour utiliser l'extension. Toutes les actions, y compris l'extraction, la modification et l'exportation, doivent être réalisables en quelques clics.</li>
+                        </ul>
+                    </li>
+                    <li><b>Maintenance et évolutivité :</b>
+                        <ul>
+                            <li>Le projet doit être conçu de manière modulaire, facilitant l'ajout de nouvelles fonctionnalités ou l'intégration avec d'autres systèmes à l'avenir sans nécessiter de changements importants dans l'architecture existante.</li>
+                        </ul>
+                    </li>
+                </ul>
         </section>
 
         <section class="content-wrapper">
