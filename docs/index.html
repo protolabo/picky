@@ -100,12 +100,6 @@
                             <li>L'extension doit être capable de traiter plusieurs types de tableaux HTML, y compris ceux avec des styles personnalisés ou des structures imbriquées.</li>
                         </ul>
                     </li>
-                    <li><b>Interface utilisateur intuitive :</b>
-                        <ul>
-                            <li>L'interface doit être simple et intuitive, permettant à l'utilisateur de gérer toutes les fonctionnalités (sélection, modification, exportation) sans difficulté.</li>
-                            <li>Un système d'aperçu des données doit être proposé avant l'exportation.</li>
-                        </ul>
-                    </li>
                 </ul>
                 
             <h3>Besoins Non Fonctionnels :</h3>
@@ -117,7 +111,8 @@
                     </li>
                     <li><b>Facilité d'utilisation :</b>
                         <ul>
-                            <li>Aucune compétence technique ne doit être requise pour utiliser l'extension. Toutes les actions, y compris l'extraction, la modification et l'exportation, doivent être réalisables en quelques clics.</li>
+                            <li>Aucune compétence technique ne doit être requise pour utiliser l'extension. L'interface doit être simple et intuitive, permettant à l'utilisateur de gérer toutes les fonctionnalités (sélection, modification, exportation) sans difficulté.</li>
+                            <li>Un système d'aperçu des données doit être proposé avant l'exportation.</li>
                         </ul>
                     </li>
                     <li><b>Maintenance et évolutivité :</b>
@@ -149,7 +144,7 @@
             <section class="week">
                 <header class="week-header">
                     <h3 class="week-title">Semaine 1 &ndash;
-                        <time datetime="2024-05-06">Lundi 9 septembre 2024</time>
+                        <time datetime="2024-09-09">Lundi 9 septembre 2024</time>
                     </h3>
                     <p>Ouverture de projet & Élaboration des exigences</p>
                 </header>
@@ -165,9 +160,21 @@
                     <h4 class="title">Réalisations</h4>
                     <ul>
                         <li>Introduction du projet</li>
-                        <li>Rédaction d'une description détaillée du projet</li>
-                        <li>Étude des solutions déjà présentes sur le marché et qui ressemblent à notre projet pour évaluer la valeur ajoutée</li>
-                        <li>Recherche et analyse des technologies que l'on peut utiliser dans la réalisation du projet</li>
+                        <li>Rédaction d'une description détaillée du projet: Voir ci haut</li>
+                        <li>Étude des solutions déjà présentes sur le marché et qui ressemblent à notre projet pour évaluer la valeur ajoutée:
+                            <ul>
+                                <li>Table Capture: extension web qui traite le code html de la page pour extraire le tableau.
+                                    Limitation: ne fonctionne pas avec les tableaux générés dynamiquement par JavaScript ou bien par la manipulation du CSS
+                                </li>
+                                <li>Web Scraper: extension web
+                                    Limitation: Requiert une configuration plus complexe et n'offre pas une interface simple pour la sélection de données spécifiques.
+                                </li>
+                                <li>Tabula: application desktop
+                                    Limitation: Fonctionne uniquement avec des fichiers PDF, pas directement avec des pages web ou des captures d'écran.
+                                </li>
+                            </ul>
+                        </li>
+                        <li>Recherche et analyse des technologies que l'on peut utiliser dans la réalisation du projet: Découvrir les outils qu'on peut utiliser et tester</li>
                     </ul>
 
                     <h4 class="title">Notes</h4>
@@ -179,7 +186,7 @@
                 <header class="week-header">
                     <h3 class="week-title">
                         Semaine 2 &ndash;
-                        <time datetime="2024-05-13">Lundi 16 septembre 2024</time>
+                        <time datetime="2024-09-16">Lundi 16 septembre 2024</time>
                     </h3>
                     <p>Analyse des exigences & 1ère architecture du projet</p>
                 </header>
@@ -192,21 +199,55 @@
 
                     <h4 class="title">Réalisations</h4>
                     <ul>
-                        <li>Besoins fonctionnelles et non fonctionnelles</li>
+                        <li>Besoins fonctionnelles et non fonctionnelles: Voir ci haut</li>
                         <li>Élaboration de la première architecture du projet</li>
-                        <li>Continuer l'étude des outils et technologies qu'on va utiliser dans le projet</li>
+                        <li>Continuer l'étude des outils et technologies qu'on va utiliser dans le projet:
+                            <ul>
+                                <li>Fast API, OpenCV, Tesseract, Pandas, React...</li>
+                            </ul>
+                        </li>
                     </ul>
 
                     <h4 class="title">Notes</h4>
                     <p>L'architecture du projet que je viens de définir n'est pas figée. Elle servira de base pour commencer le travail, et nous continuerons à la raffiner ou la modifier au fur et à mesure de l'avancement du projet.</p>
                     <br>
                     <p>J'ai également commencé à réfléchir à l'interface utilisateur (UI).</p>
+                </div>
+            </section>
+
+            <section class="week">
+                <header class="week-header">
+                    <h3 class="week-title">
+                        Semaine 3 &ndash;
+                        <time datetime="2024-09-23">Lundi 23 septembre 2024</time>
+                    </h3>
+                    <p>Analyse des outils de capture d'écran & Démarrage du backend & Développement d'une extension "Hello World"</p>
+                </header>
+                <div class="week-content">
+                    <h4 class="title">Objectifs</h4>
+                    <ul>
+                        <li>Étudier les outils de capture d'écran</li>
+                        <li>Démarrer le développement du backend</li>
+                        <li>Créer une extension "Hello World" pour tester et découvrir comment ça marche</li>
+                    </ul>
+
+                    <h4 class="title">Réalisations</h4>
+                    <ul>
+                    
+                    </ul>
+
+                    <h4 class="title">Notes</h4>
+                    <p></p>
+                </div>
+            </section>
+
+
         </section>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 20 septembre 2024</p>
+        <p>Dernière mise à jour: 29 septembre 2024</p>
     </footer>
 
     <script>
