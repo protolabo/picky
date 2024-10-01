@@ -163,13 +163,13 @@
                         <li>Rédaction d'une description détaillée du projet: Voir ci haut</li>
                         <li>Étude des solutions déjà présentes sur le marché et qui ressemblent à notre projet pour évaluer la valeur ajoutée:
                             <ul>
-                                <li>Table Capture: extension web qui traite le code html de la page pour extraire le tableau.
+                                <li>Table Capture: extension web qui traite le code html de la page pour extraire le tableau<br>
                                     Limitation: ne fonctionne pas avec les tableaux générés dynamiquement par JavaScript ou bien par la manipulation du CSS
                                 </li>
-                                <li>Web Scraper: extension web
+                                <li>Web Scraper: extension web<br>
                                     Limitation: Requiert une configuration plus complexe et n'offre pas une interface simple pour la sélection de données spécifiques.
                                 </li>
-                                <li>Tabula: application desktop
+                                <li>Tabula: application desktop<br>
                                     Limitation: Fonctionne uniquement avec des fichiers PDF, pas directement avec des pages web ou des captures d'écran.
                                 </li>
                             </ul>
@@ -233,7 +233,16 @@
 
                     <h4 class="title">Réalisations</h4>
                     <ul>
-                    
+                        <li>Création d'une extension "hello world" et test sur chrome extensions en utilisant le "developer mode"</li>
+                        <li>Étude des outils de capture d'écran:
+                            <ul>
+                                <li>html2canvas : C'est une bibliothèque JavaScript qui permet de capturer le contenu d'une page web en le "dessinant" sur un canvas HTML5 (càd elle manipule du contenu html et css).J'ai créé une page de démonstration pour tester cette technique sur différents types de tableaux: des tableaux HTML et des tableaux sous forme d'image. Bien qu'efficace dans de nombreux cas, html2canvas présente quelques limitations, notamment avec le contenu généré dynamiquement avec Js et les images hébergées sur des domaines externes (je ne suis pas arrivé à reproduire ces cas limites mais j'ai cherché en ligne et j'ai trouvé qu'ils existent).
+                                </li>
+                                <li>Autres méthodes : do-to-image, API de capture d'écran sur Chrome et d'autres projets random sur github. Ces alternatives se sont avérées soit incomplètes, soit nécessitant des permissions supplémentaires, ce qui pourrait nuire à l'expérience utilisateur.</li>
+                            </ul>
+                            En conclusion, je pense que c'est mieux de commencer avec html2canvas pour sa facilité d'utilisation et sa large compatibilité. Si des problèmes de performance se manifestent vers la fin du projet, nous envisagerons soit de passer à un autre outil, soit de modifier la logique du projet, par exemple en optant pour une approche de glisser-déposer d'image, de téléchargement d'image...
+                        </li>
+                        <li>Je n'ai pas vraiment commencé le développement du backend, car j'ai passé la majorité de mon temps à tester et évaluer les différents outils de capture d'écran. Cependant, je me suis un peu familiarisé avec FastAPI, j'ai étudié sa documentation, réalisé quelques tutoriels de base, et commencé à planifier la structure de notre API.</li>
                     </ul>
 
                     <h4 class="title">Notes</h4>
