@@ -267,11 +267,30 @@
 
                     <h4 class="title">Réalisations</h4>
                     <ul>
-                        
+                        <li>
+                            Commencer par apprendre les outils qu'on va utiliser du côté serveur pour faire le traitement d'image.
+                            <ul>
+                                <li>OpenCV: C'est une bibliothèque open source de vision par ordinateur et de traitement d'image. Elle fournit des outils pour manipuler des images et des vidéos. J'ai commencé à apprendre les bases de OpenCV et à réaliser quelques tutoriels pour me familiariser avec les fonctionnalités de base.</li>
+                                <li>Tesseract: C'est un moteur de reconnaissance optique de caractères (OCR) open source. Il permet de convertir des images de texte en texte brut. J'ai également commencé à apprendre les bases de Tesseract et à réaliser quelques tutoriels pour comprendre comment il fonctionne.</li>
+                            </ul>
+                        </li>
+                        <li>Créer un script qui prend en entrée une image d'un tableau et renvoie un array 2D: C'est une première version du script qui prend une image en entrée, la traite avec OpenCV et Tesseract, et renvoie un array 2D représentant le tableau extrait. J'ai réalisé quelques tests avec des images de tableaux simples.</li>
                     </ul>
                     
                     <h4 class="title">Notes</h4>
-                    <p></p>
+                    <p>Cette première version du script marche bien dans la plupart des images de tests, mais jusqu'à maintenant on 2 problèmes:
+                        <ul>
+                            <li>La fonction findContours retourne aussi le contour externe du tableau donc il faut trouver une fonciton qui filtre ces contours et élimine les conteurs externes, j'ai jusqu'à maintenant 3 solutions à discuter:
+                                <br>
+                                - skip le premier contours à l'index i=0 car il est le contour externe le plus grand. Elle fonctionne dans notre cas car avec RETR_TREE les contours sont organisés dans une hiérarchie parent-enfant basée sur leur imbrication dans l'image (Il se peut que cette méthode ne marche pas bien si on a beacoup de tableau imbriqué dans l'image)
+                                <br>
+                                - faire un seuil des cases, par exemple 1000 &lt; area de la case &lt; 5000. C'est presque hardcoded car il se peut qu'on ait un tableau plus petit ou plus grand
+                                <br>
+                                - trier les contours dans l'ordre croissant de leur area et supprimer le plus grand car dans ce cas on est sur qu'il est le conteur externe 
+                            </li>
+                            <li>Problème de detection des 3 premieres cases dans test.png</li>
+                        </ul>
+                    </p>
         </section>
     </main>
 
