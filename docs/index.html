@@ -77,12 +77,17 @@
                 <ul>
                     <li><b>Extraction de tableaux depuis une page web :</b>
                         <ul>
-                            <li>L'utilisateur doit pouvoir sélectionner un tableau à partir de l'interface de la page web pour l'extraction.</li>
+                            <li>L'utilisateur doit pouvoir sélectionner un tableau à partir de l'interface de la page web pour l'extraction. Pour faciliter cette extraction, L'extension utilise l'outil html2canvas qui permet de sélectionner et capturer la zone souhaitée dans la page web.</li>
                         </ul>
                     </li>
                     <li><b>Prétraitement des images :</b>
                         <ul>
-                            <li>L'application doit inclure un prétraitement d'image pour assurer une meilleure lisibilité des données capturées.</li>
+                            <li>L'application doit inclure un prétraitement d'image pour assurer une meilleure lisibilité des données capturées. OpenCV est utilisé pour ce prétraitement, permettant d'améliorer la qualité de l'image, d'ajuster le contraste et de détecter les bordures du tableau.</li>
+                        </ul>
+                    </li>
+                    <li><b>Reconnaissance et extraction des données :</b>
+                        <ul>
+                            <li>Une fois l'image prétraitée, Tesseract est utilisé pour la reconnaissance optique des caractères (OCR).</li>
                         </ul>
                     </li>
                     <li><b>Modification des données extraites :</b>
@@ -125,9 +130,16 @@
 
         <section class="content-wrapper">
             <h2>Infrastructure</h2>
-
-            <!-- TODO: Décrire l'infrastructure de l'application -->
-        </section>
+            <ul>
+                <li><b>Backend</b>: Le backend de l'application est développé en Python, utilisant le framework FastAPI pour la création du REST API.
+                </li>
+                <li><b>Frontend</b>: Le frontend de l'application est développé en React, permettant une interface utilisateur interactive et réactive.
+                </li>
+                <li><b>Traitement d'image et extraction des données</b>: Le traitement d'image et l'extraction des données sont réalisés en utilisant les bibliothèques OpenCV et Tesseract.
+                </li>
+                <li><b>Manipulation des données</b>: La manipulation des données extraites est effectuée en utilisant la bibliothèque Pandas, permettant un traitement efficace des données tabulaires.
+                </li>
+            </ul>
 
         <section class="content-wrapper progress-section">
             <header class="progress-section-header">
@@ -200,7 +212,10 @@
                     <h4 class="title">Réalisations</h4>
                     <ul>
                         <li>Besoins fonctionnelles et non fonctionnelles: Voir ci haut</li>
-                        <li>Élaboration de la première architecture du projet</li>
+                        <li>Élaboration de la première architecture du projet
+                            <img src="images/architecture.png" alt="Architecture du projet" height="500" width="600">
+                        </li>
+
                         <li>Continuer l'étude des outils et technologies qu'on va utiliser dans le projet:
                             <ul>
                                 <li>Fast API, OpenCV, Tesseract, Pandas, React...</li>
