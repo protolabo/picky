@@ -319,24 +319,26 @@
                 <h4 class="title">Objectifs</h4>
                 <ul>
                     <li>Régler le problème de area &gt; 5000 qui dépend de la taille des cellules du tableau: il faut trouver une façon de généraliser ça sur n'importe quel tableau.</li>
-                    <li>Régler le problème du sueil pour passer à la prochaine ligne dans le tableau: on a 20 pixels mais il faut generaliser.</li>
+                    <li>Régler le problème du seuil pour passer à la prochaine ligne dans le tableau: on a 20 pixels mais il faut generaliser.</li>
                     <li>Régler le problème des 3 premières cases qui ne se détectent pas dans l'image test.png</li>
                     <li>Faire des tests diversifiés.</li>
                 </ul>
 
                 <h4 class="title">Réalisations</h4>
                 <ul>
-
+                    <li>Régler le problème de area &gt; 5000 qui dépend de la taille des cellules du tableau: j'ai trouvé une solution qui se base sur la hierarchie du tableau. <br> cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE) retourne la hiérarchie du tableau en considérant que le grand contour externe du tableau est le parent de toutes les autres cases. On détecte ce contour et après on filtre les contours détectés en laissant seulement les contours enfants directs de ce contour, et on sait bien que ces contours forment les cases de notre tableau. <br>On applique un filtre de w &gt; 10 and h &gt; 10 car il se peut qu'il y ait du bruit comme des pixels qui semblent être des contours à cause du contraste ou tout autre problème. <br>Les contours restants sont des cases non valides (soit du texte ou du bruit qui sont imbriqués au 2ème niveau).</li>
+                    <li>Régler le problème du seuil pour passer à la prochaine ligne dans le tableau: j'ai créé une fonction resize_image qui consiste à généraliser la forme des images avec une largeur de 2000 pixels. La hauteur sera calculée selon la proportion dans l'image originale pour préserver les proportions. Donc maintenant on sait bien qu'on a au moins 20 pixels entre chaque ligne.</li>
+                    <li>Régler le problème des 3 premières cases qui ne se détectent pas dans l'image test.png: Ce problème est causé par la qualité de l'image qui est un peu flou, après avoir resize l'image avec une interpolation cv2.INTER_AREA, ce problème n'apparait plus car le contraste augmente un peu.</li>
                 </ul>
                 
                 <h4 class="title">Notes</h4>
-                <p></p>
+                <p>Resize_image a causé un autre problème dans le cas des images très petites : quand on les agrandit, le contraste élevé crée du bruit dans les images et crée des problèmes dans la détection du texte. J'ai rencontré ce problème dans une seule image. Je vais chercher une solution à ça après.</p>
     </section>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 22 octobre 2024</p>
+        <p>Dernière mise à jour: 28 octobre 2024</p>
     </footer>
 
     <script>
