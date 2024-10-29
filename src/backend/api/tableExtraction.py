@@ -1,7 +1,17 @@
 import cv2
 import numpy as np
 import pytesseract
-from pytesseract import Output
+
+def resize_image(image, target_width=2000):
+    # Calcul du ratio pour préserver les proportions
+    height, width = image.shape[:2]
+    aspect_ratio = width / height
+    target_height = int(target_width / aspect_ratio)
+    
+    # Redimensionnement de l'image
+    resized_image = cv2.resize(image, (target_width, target_height), interpolation=cv2.INTER_AREA)
+    
+    return resized_image
 
 def image_to_2d_array(image):
     # Convertir l'image en niveaux de gris
@@ -25,69 +35,71 @@ def image_to_2d_array(image):
     dilated = cv2.dilate(thresh, kernel, iterations=1)
 
     # Trouver tous les contours, y compris les contours internes
-    contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    
-    # Filtrer les contours pour ne garder que ceux qui ressemblent à des cellules
-    cells = []
-    for i, c in enumerate(contours):
-        '''
-        Le problème qu'on a est que notre code détecte le contours externe du tableau. Pour filtrer ce contours externe, j'ai 3 solutions:
-        - skip le premier contours à l'index i=0 car il est le contour externe le plus grand. Elle fonctionne dans notre cas car avec RETR_TREE les contours sont organisés dans une hiérarchie parent-enfant basée sur leur imbrication dans l'image (Il se peut que cette méthode ne marche pas bien si on a  beaoucp de tableau imbriqué dans l'image)
-        - faire un seuil des cases, par exemple 1000 < area < 5000. C'rest presque hardcoded car il se peut qu'on ait un tableau plus petit ou plus grand
-        - trier les contours dans l'ordre croissant de leur area et supprimer le plus grand car dans ce cas on est sur qu'il est le conteur externe 
-        '''
-        if i == 0:
-            continue
-        area = cv2.contourArea(c)
-        '''
-        1000 pour test.png
-        10000 pour test1.png
-        '''
-        if area > 10000:  # TODO: Trouver un seuil plus robuste (généraliser)
-            x, y, w, h = cv2.boundingRect(c)
-            cells.append((x, y, w, h))
+    contours, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    hierarchy = hierarchy[0]
 
-    # Trier les cellules par leur position (d'abord par y, puis par x)
-    cells.sort(key=lambda c: (c[1], c[0]))
+    # Trouver le contour externe du tableau (le plus grand contour)
+    main_contour = None
+    max_area = 0
+    main_idx = -1 # Index du contour principal
+    for i, contour in enumerate(contours):
+        area = cv2.contourArea(contour)
+        if area > max_area:
+            max_area = area
+            main_contour = contour
+            main_idx = i
     
+    # Extraire les cellules (contours enfants directs du contour principal)
+    cells = []
+    for i, h in enumerate(hierarchy):
+        # h[3] est l'index du parent
+        if h[3] == main_idx:  # Si le parent est le contour principal
+            x, y, w, h = cv2.boundingRect(contours[i])
+            if w > 10 and h > 10:  # Filtre minimal pour éviter le bruit
+                cells.append((x, y, w, h))
+
+    # Trier les cellules par position
+    cells.sort(key=lambda c: (c[1], c[0]))
+
     # Déterminer les lignes en regroupant les cellules par coordonnée y similaire
     rows = []
     current_row = []
     last_y = cells[0][1]
     for cell in cells:
-        if cell[1] > last_y + 20:  # on passe à nouvelle ligne si la différence en y est significative
+        if cell[1] > last_y + 20: # on passe à nouvelle ligne si la différence en y est significative (maintenant 20 est universel car on resize les images pourqu'elles soient de presque même taille)
             rows.append(current_row)
             current_row = []
         current_row.append(cell)
         last_y = cell[1]
     rows.append(current_row)
-    
+
     # Trier chaque ligne par coordonnée x
     for row in rows:
         row.sort(key=lambda c: c[0])
-    
-    # Extraire le texte de chaque cellule
+
+    # Extraire le texte de chaque cellule et dessiner les rectangles
     table_data = []
-    for row in rows:
+    for row_index, row in enumerate(rows):
         row_data = []
-        for cell in row:
+        for cell_index, cell in enumerate(row):
             x, y, w, h = cell
-            # Extraire l'image de la boite (region sur laquelle on fait l'extraction du texte)
             roi = image[y:y+h, x:x+w]
-            # config='--psm 6' spécifie le mode de segmentation de page. Le mode 6 suppose qu'il y a un seul bloc de texte uniforme
             text = pytesseract.image_to_string(roi, config='--psm 6').strip()
             row_data.append(text)
+
         table_data.append(row_data)
-    
+
     return table_data
 
 # Charger l'image
-image_path = '../utils/test1.png'
+image_path = 'test6.png'
 image = cv2.imread(image_path)
 
-# Utilisation de la fonction
-result = image_to_2d_array(image)
+resized_image = resize_image(image)
 
-# Affichage du résultat
+# Utilisation de la fonction
+result = image_to_2d_array(resized_image)
+
+# Affichage du résultat textuel
 for row in result:
     print(row)
