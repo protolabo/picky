@@ -358,15 +358,18 @@
 
             <h4 class="title">Réalisations</h4>
             <ul>
+                <li>J'ai abandonné l'idée de redimensionner toutes les images à une largeur/hauteur cible, maintenant je calcule l'aire de l'image et je calcule un facteur d'échelle avec lequel je fais le produit pour calculer mes nouvelles largeur/hauteur pour garder les mêmes proportions.</li>
+                <li>J'ai ajouté une fonction get_seuils qui calcul le seuil minimum pour les cellules (environ 0.5% de la largeur/hauteur) et le seuil minimum pour passer à la nouvelle ligne (environ 0.1% de la hauteur). Ce sont nos "gold number".</li>
+                <li>J'ai créé un script de validation d'image qui prend une image en entrée et renvoie si c'est une image valide ou non. Je commence par détecter si l'image contient des contours et une hierarchie ou non. Puis je filtre ces contours pour extraire le nombre de contours candidats qui peuvent représenter un tableau. Si le nombre est 0 ou &gt; 1 alors l'image est invalide car soit elle ne contient aucun tableau valide soit elle contient plus qu'un tableau. La fonction validate retourne un commentaire qu'on va afficher à l'utilisateur.</li>
             </ul>
             
             <h4 class="title">Notes</h4>
-            <p></p>
+            <p>Pour les grandeurs minimales d'image. Je ne trouve pas de grandeurs qu'on peut exiger, car on a des cas où on peut avoir un tableau d'une seule ligne ou une seule colonne, qu'on peut traiter. Et si jamais l'utilisateur fournit une image très petite, elle ne va pas passer tous les filtres de validation et elle ne sera pas accéptée.</p>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 28 octobre 2024</p>
+        <p>Dernière mise à jour: 4 novembre 2024</p>
     </footer>
 
     <script>
