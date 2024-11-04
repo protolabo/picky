@@ -2,61 +2,83 @@ import cv2
 import numpy as np
 import pytesseract
 
-def resize_image(image, target_width=2000):
-    # Calcul du ratio pour préserver les proportions
+def get_optimal_resize_dimensions(image, target_area=4000000):
+    """
+    Calcule les dimensions optimales pour le redimensionnement
+    en se basant sur l'aire de l'image plutôt qu'une largeur/ hauteur fixe
+    """
     height, width = image.shape[:2]
-    aspect_ratio = width / height
-    target_height = int(target_width / aspect_ratio)
-    
-    # Redimensionnement de l'image
-    resized_image = cv2.resize(image, (target_width, target_height), interpolation=cv2.INTER_AREA)
-    
-    return resized_image
+    current_area = height * width
+    scale_factor = np.sqrt(target_area / current_area)
+
+    new_width = int(width * scale_factor)
+    new_height = int(height * scale_factor)
+
+    return new_width, new_height
+
+def get_seuils(image):
+    """
+    Calcule dynamiquement les seuils pour la détection des lignes
+    et des cellules en fonction de la taille de l'image
+    """
+    height, width = image.shape[:2]
+    area = height * width
+
+    # Seuil pour nouvelle ligne (environ 0.1% de la hauteur)
+    seuil_nv_ligne = max(int(height * 0.001), 5)
+
+    # Seuil minimum pour les cellules (environ 0.5% de la largeur/hauteur)
+    min_cell_dim = max(int(min(width, height) * 0.005), 3)
+
+    return seuil_nv_ligne, min_cell_dim
+
 
 def image_to_2d_array(image):
+    # Redimensionner avec les dimensions optimales
+    new_width, new_height = get_optimal_resize_dimensions(image)
+    resized_image = cv2.resize(image, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
     # Convertir l'image en niveaux de gris
-    # La conversion en niveau de gris réduit l'image à une seule couche où chaque pixel est représenté par une seule valeur d'intensité allant de 0 (noir) à 255 (blanc)
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    
+
+    # Appliquer un flou gaussien pour réduire le bruit
+    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+
     # Appliquer un seuillage adaptatif
-    '''
-    Pour chaque pixel, l'algorithme calcule un seuil en utilisant une moyenne pondérée gaussienne des pixels voisins 11x11
-    Si la valeur du pixel est supérieure à ce seuil local, il devient noir (0), sinon il devient blanc (255) dans l'image résultante.
-    L'inversion (THRESH_BINARY_INV) est souvent utilisée pour la préparation d'images pour l'OCR, car Tesseract fonctionne généralement mieux avec du texte blanc sur fond noir.
-    '''
-    thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
-    
-    '''
-    L'effet du dilatation est d'élargir les régions blanches et de combler les petits trous ou ruptures dans ces régions.
-    Renforcement des lignes : Si les lignes du tableau sont fines ou discontinues, la dilatation les rend plus épaisses et continues.
-    Fermeture des petits espaces : Les petits espaces entre les lignes sont comblés, ce qui aide à créer des contours fermés pour chaque cellule.
-    '''
+    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+
+    # Dilater l'image pour mieux connecter les lignes du tableau
     kernel = np.ones((3,3), np.uint8)
     dilated = cv2.dilate(thresh, kernel, iterations=1)
 
-    # Trouver tous les contours, y compris les contours internes
+    # Trouver les contours avec leur hiérarchie
     contours, hierarchy = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     hierarchy = hierarchy[0]
+
+    # Obtenir les seuils dynamiques
+    seuil_nv_ligne, min_cell_dim = get_seuils(resized_image)
 
     # Trouver le contour externe du tableau (le plus grand contour)
     main_contour = None
     max_area = 0
-    main_idx = -1 # Index du contour principal
+    main_idx = -1
+
     for i, contour in enumerate(contours):
         area = cv2.contourArea(contour)
         if area > max_area:
             max_area = area
             main_contour = contour
             main_idx = i
-    
+
     # Extraire les cellules (contours enfants directs du contour principal)
     cells = []
     for i, h in enumerate(hierarchy):
         # h[3] est l'index du parent
         if h[3] == main_idx:  # Si le parent est le contour principal
             x, y, w, h = cv2.boundingRect(contours[i])
-            if w > 10 and h > 10:  # Filtre minimal pour éviter le bruit
+            if w > min_cell_dim and h > min_cell_dim:  # Filtre minimal pour éviter le bruit
                 cells.append((x, y, w, h))
+
 
     # Trier les cellules par position
     cells.sort(key=lambda c: (c[1], c[0]))
@@ -66,7 +88,7 @@ def image_to_2d_array(image):
     current_row = []
     last_y = cells[0][1]
     for cell in cells:
-        if cell[1] > last_y + 20: # on passe à nouvelle ligne si la différence en y est significative (maintenant 20 est universel car on resize les images pourqu'elles soient de presque même taille)
+        if cell[1] > last_y + seuil_nv_ligne: # on passe à nouvelle ligne si la différence en y est significative (maintenant 20 est universel car on resize les images pourqu'elles soient de presque même taille)
             rows.append(current_row)
             current_row = []
         current_row.append(cell)
@@ -95,10 +117,9 @@ def image_to_2d_array(image):
 image_path = 'test6.png'
 image = cv2.imread(image_path)
 
-resized_image = resize_image(image)
 
 # Utilisation de la fonction
-result = image_to_2d_array(resized_image)
+result = image_to_2d_array(image)
 
 # Affichage du résultat textuel
 for row in result:
