@@ -333,6 +333,7 @@
                 
                 <h4 class="title">Notes</h4>
                 <p>Resize_image a causé un autre problème dans le cas des images très petites : quand on les agrandit, le contraste élevé crée du bruit dans les images et crée des problèmes dans la détection du texte. J'ai rencontré ce problème dans une seule image. Je vais chercher une solution à ça après.</p>
+            </div>
     </section>
     <section class="week">
         <header class="week-header">
@@ -365,11 +366,67 @@
             
             <h4 class="title">Notes</h4>
             <p>Pour les grandeurs minimales d'image. Je ne trouve pas de grandeurs qu'on peut exiger, car on a des cas où on peut avoir un tableau d'une seule ligne ou une seule colonne, qu'on peut traiter. Et si jamais l'utilisateur fournit une image très petite, elle ne va pas passer tous les filtres de validation et elle ne sera pas accéptée.</p>
+        </div>
+    </section>
+    <section class="week">
+        <header class="week-header">
+            <h3 class="week-title week-title">
+                Semaine 9 &ndash;
+                <time datetime="2024-11-04">Lundi 4 novembre 2024</time>
+            </h3>
+            <p>Première version de l'extension</p>
+        </header>
+        <div class="week-content">
+            <h4 class="title">Objectifs</h4>
+            <ul>
+                <li>Créer une première version de l'extension qui permet d'upload une image ou drag and drop l'image dans l'extension
+                </li>
+                <li>L'image est envoyé au backend pour faire la validation: Si l'image n'est pas valide, on retourne un message d'erreur clair et détaillé.</li>
+                <li>Si l'image est valide, on la traite et on retourne les données extraites.</li>
+                <li>Afficher les données dans un tableau dans l'extension.</li>
+            </ul>
+
+            <h4 class="title">Réalisations</h4>
+            <ul>
+                <li>Création de l'extension avec HTML, CSS et JavaScript.</li>
+                <li>Création de l'interface utilisateur de l'extension.</li>
+                <li>Intégration de l'API de validation d'image dans l'extension.</li>
+                <li>Intégration de l'API de traitement d'image dans l'extension.</li>
+                <li>Affichage des données extraites dans un tableau dans l'extension.</li>
+            </ul>
+            
+            <h4 class="title">Notes</h4>
+            <p> J'ai également travaillé sur le script de l'extraction du tableau pour trouver une solution au cas extrême où la bordure externe du tableau n'est pas capturée dans l'image. La solution que j'ai trouvé est d'extraire la grille du tableau d'abord, l'afficher à l'utilisateur et ajouter la fonctionnalité d'étendre la bordure externe du tableau s'il veut ajouter d'autres cases qui n'étaient pas capturées. Cela permer à l'utilisateur d'aider l'outil à faire son travail et de corriger les erreurs potentielles de la détection de la grille avant de commencer l'extraction du texte.</p>
+        </div>
+    </section>
+    <section class="week">
+        <header class="week-header">
+            <h3 class="week-title">
+                Semaine 10 &ndash;
+                <time datetime="2024-11-11">Lundi 11 novembre 2024</time>
+            </h3>
+            <p>2ème version de l'extension: Permettre la modification du tableau affiché</p>
+        </header>
+        <div class="week-content">
+            <h4 class="title">Objectifs</h4>
+            <ul>
+                <li>Permettre à l'utilisateur de modifier le tableau affiché dans l'extension.</li>
+                <li>Ajouter des fonctionnalités d'édition de tableau: Ajouter/supprimer des lignes et des colonnes, modifier le contenu des cellules.</li>
+                <li>Trouver une solution au cas où le tableau extrait est très grand: popup dynamique ou aller dans une autre fenêtre dans le navigateur.</li>
+                <li>Fixer le code js qui transforme un array 2d en un code HTML d'un tableau.</li>
+            </ul>
+
+            <h4 class="title">Réalisations</h4>
+            <ul>
+            </ul>
+            
+            <h4 class="title">Notes</h4>
+            <p></p>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 4 novembre 2024</p>
+        <p>Dernière mise à jour: 17 novembre 2024</p>
     </footer>
 
     <script>
