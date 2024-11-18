@@ -113,8 +113,12 @@ def image_to_2d_array(image):
 
     return table_data
 
+
+"""
+TESTER LE SCRIPT DANS LE TERMINAL:
+
 # Charger l'image
-image_path = 'test6.png'
+image_path = 'test.png'
 image = cv2.imread(image_path)
 
 
@@ -124,3 +128,4 @@ result = image_to_2d_array(image)
 # Affichage du résultat textuel
 for row in result:
     print(row)
+"""

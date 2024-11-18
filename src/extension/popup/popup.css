@@ -1,0 +1,72 @@
+.container {
+    width: 400px;
+    padding: 20px;
+  }
+  
+  .drop-zone {
+    border: 2px dashed #ccc;
+    border-radius: 4px;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .drop-zone.dragover {
+    background-color: #e1f5fe;
+    border-color: #2196f3;
+  }
+  
+  .drop-zone-text {
+    color: #666;
+  }
+  
+  #upload-btn {
+    background-color: #2196f3;
+    color: white;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  
+  .loading {
+    text-align: center;
+    margin: 20px 0;
+  }
+  
+  .error {
+    background-color: #ffebee;
+    color: #c62828;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+  }
+  
+  .result {
+    margin-top: 20px;
+  }
+  
+  .hidden {
+    display: none;
+  }
+  
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+  
+  th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+  
+  th {
+    background-color: #f5f5f5;
+  }
