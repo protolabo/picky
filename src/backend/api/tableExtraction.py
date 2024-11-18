@@ -42,10 +42,10 @@ def image_to_2d_array(image):
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # Appliquer un flou gaussien pour réduire le bruit
-    blurred = cv2.GaussianBlur(gray, (5, 5), 0)
+    #blurred = cv2.GaussianBlur(gray, (5, 5), 0)
 
     # Appliquer un seuillage adaptatif
-    thresh = cv2.adaptiveThreshold(blurred, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
+    thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
     # Dilater l'image pour mieux connecter les lignes du tableau
     kernel = np.ones((3,3), np.uint8)

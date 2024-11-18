@@ -7,25 +7,30 @@
 </head>
 <body>
   <div class="container">
-  <div id="drop-zone" class="drop-zone">
-    <div class="drop-zone-text">
-      Glissez et déposez votre image ici<br>
-      ou
-      <button id="upload-btn">Choisir un fichier</button>
+    <div id="drop-zone" class="drop-zone">
+      <div class="drop-zone-text">
+        Glissez et déposez votre image ici<br>ou<br>
+        <button id="upload-btn">Choisir un fichier</button>
+      </div>
+      <input type="file" id="file-input" accept="image/*" hidden>
     </div>
-    <input type="file" id="file-input" accept="image/*" hidden>
-  </div>
-  
-  <div id="loading" class="loading hidden">
-    Traitement en cours...
-  </div>
+    
+    <div id="loading" class="loading hidden">
+      Traitement en cours...
+    </div>
 
-  <div id="error" class="error hidden">
-  </div>
+    <div id="error" class="error hidden">
+    </div>
 
-  <div id="result" class="result hidden">
+    <div id="open-window-div" class="open-window hidden">
+      <button id="open-window" class="window-btn">Ouvrir le tableau en plein écran</button>
+    </div>
+
+    <div id="result" class="result hidden">
+      <div class="table-container">
+      </div>
+    </div>
   </div>
-</div>
-  <script src="popup.js"></script>
+<script src="popup.js"></script>
 </body>
 </html>
