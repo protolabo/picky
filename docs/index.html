@@ -411,22 +411,28 @@
             <h4 class="title">Objectifs</h4>
             <ul>
                 <li>Permettre à l'utilisateur de modifier le tableau affiché dans l'extension.</li>
-                <li>Ajouter des fonctionnalités d'édition de tableau: Ajouter/supprimer des lignes et des colonnes, modifier le contenu des cellules.</li>
+                <li>Ajouter des fonctionnalités d'édition de tableau: Supprimer des lignes et des colonnes, modifier le contenu des cellules.</li>
                 <li>Trouver une solution au cas où le tableau extrait est très grand: popup dynamique ou aller dans une autre fenêtre dans le navigateur.</li>
                 <li>Fixer le code js qui transforme un array 2d en un code HTML d'un tableau.</li>
             </ul>
 
             <h4 class="title">Réalisations</h4>
             <ul>
+                <li>Permettre à l'utilisateur de modifier le tableau affiché dans l'extension.</li>
+                <li>Popup dynamique pour les tableaux très grands.</li>
+                <li>Ajout d'un bouton pour ouvrir le tableau dans une nouvelle fenêtre.</li>
+                <li>Fixer le code js qui transforme un array 2d en un code HTML d'un tableau.</li>
             </ul>
             
             <h4 class="title">Notes</h4>
-            <p></p>
+            <p>Je n'ai pas encore implémenté la fonctionnalité de suppression des lignes/colonnes. Nous rencontrons un problème avec les tableaux contenant des cellules merged : notre code de transformation d'un tableau 2D en HTML ne détecte pas ces cellules. Il crée donc des lignes avec un nombre de cellules différent, ce qui rend impossible la suppression des lignes/colonnes puisque le nombre de cellules varie selon les lignes.<br>
+            Solution: Prendre le nb de cases max dans une ligne. Dans les lignes avec des cellules merged: remplir les x premieres cellules puis laisser les autres cellules (max - x) vides pour que toutes les lignes aient le même nombre de cellules.</p>
+            </p>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 17 novembre 2024</p>
+        <p>Dernière mise à jour: 20 novembre 2024</p>
     </footer>
 
     <script>
