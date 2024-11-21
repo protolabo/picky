@@ -213,6 +213,7 @@
                     <ul>
                         <li>Besoins fonctionnelles et non fonctionnelles: Voir ci haut</li>
                         <li>Élaboration de la première architecture du projet
+                            <br>
                             <img src="images/architecture.png" alt="Architecture du projet" height="500" width="600">
                         </li>
 
@@ -389,7 +390,10 @@
             <h4 class="title">Réalisations</h4>
             <ul>
                 <li>Création de l'extension avec HTML, CSS et JavaScript.</li>
-                <li>Création de l'interface utilisateur de l'extension.</li>
+                <li>Création de l'interface utilisateur de l'extension.
+                    <br>
+                    <img src="images/extensionV1.png" alt="Première version" height="500" width="500">
+                </li>
                 <li>Intégration de l'API de validation d'image dans l'extension.</li>
                 <li>Intégration de l'API de traitement d'image dans l'extension.</li>
                 <li>Affichage des données extraites dans un tableau dans l'extension.</li>
@@ -418,9 +422,15 @@
 
             <h4 class="title">Réalisations</h4>
             <ul>
-                <li>Permettre à l'utilisateur de modifier le tableau affiché dans l'extension.</li>
+                <li>Permettre à l'utilisateur de modifier le tableau affiché dans l'extension.
+                    <br>
+                    <img src="images/extensionV2.2.png" alt="Modifier tableau" height="500" width="500">
+                </li>
                 <li>Popup dynamique pour les tableaux très grands.</li>
-                <li>Ajout d'un bouton pour ouvrir le tableau dans une nouvelle fenêtre.</li>
+                <li>Ajout d'un bouton pour ouvrir le tableau dans une nouvelle fenêtre.
+                    <br>
+                    <img src="images/extensionV2.1.png" alt="Nouvelle fenêtre" height="500" width="800">
+                </li>
                 <li>Fixer le code js qui transforme un array 2d en un code HTML d'un tableau.</li>
             </ul>
             
@@ -428,11 +438,40 @@
             <p>Je n'ai pas encore implémenté la fonctionnalité de suppression des lignes/colonnes. Nous rencontrons un problème avec les tableaux contenant des cellules merged : notre code de transformation d'un tableau 2D en HTML ne détecte pas ces cellules. Il crée donc des lignes avec un nombre de cellules différent, ce qui rend impossible la suppression des lignes/colonnes puisque le nombre de cellules varie selon les lignes.<br>
             Solution: Prendre le nb de cases max dans une ligne. Dans les lignes avec des cellules merged: remplir les x premieres cellules puis laisser les autres cellules (max - x) vides pour que toutes les lignes aient le même nombre de cellules.</p>
             </p>
+        </div>
+    </section>
+    <section class="week">
+        <header class="week-header">
+            <h3 class="week-title">
+                Semaine 11 &ndash;
+                <time datetime="2024-11-18">Lundi 18 novembre 2024</time>
+            </h3>
+            <p>3ème version de l'extension: Exporter les données</p>
+        </header>
+        <div class="week-content">
+            <h4 class="title">Objectifs</h4>
+            <ul>
+                <li>Ajouter l'édition du tableau en plein écran.</li>
+                <li>Cacher ou griser le tableau dans le popup quand on ouvre le tableau en plein écran.</li>
+                <li>Ajouter l'exportation en csv et json.</li>
+                <li>Ajouter la possibilité de merge des cellules horizontalement.</li>
+                <li>Ajouter fonctionnalité de supprimer ligne/colonne.</li>
+            </ul>
+            <h4 class="title">Réalisations</h4>
+            <ul>
+                
+            </ul>
+            
+            <h4 class="title">Notes</h4>
+            <p></p>
+            </p>
+        </div>
+    </section>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 20 novembre 2024</p>
+        <p>Dernière mise à jour: 21 novembre 2024</p>
     </footer>
 
     <script>
