@@ -12,10 +12,12 @@ document.addEventListener('DOMContentLoaded', async function() {
         if (storedData.tableData) {
             tableData = storedData.tableData;
             showResults(tableData);
+            setupExportButtons();
         }
     } else {
         // Mode popup 
         setupPopupInterface();
+        setupExportButtons();
     }
 });
 
@@ -153,10 +155,12 @@ function showResults(data) {
     const resultDiv = document.getElementById('result');
     const openWindowBtn = document.getElementById('open-window-div');
     const errorDiv = document.getElementById('error');
+    const exportButtons = document.getElementById('export-buttons');
     resultDiv.classList.remove('hidden');
     openWindowBtn.classList.remove('hidden'); 
     errorDiv.classList.add('hidden');
-}
+    exportButtons.classList.remove('hidden');
+  }
 
   setupEditableTable();
 }
@@ -249,3 +253,52 @@ if (isWindowMode) {
         await chrome.storage.local.remove(['tableData']);
     });
 };
+
+function convertToCSV(data) {
+  const rows = data.map(row => {
+      return row.map(cell => {
+          // Échapper les virgules et les guillemets
+          const escaped = cell.toString().replace(/"/g, '""');
+          // TODO: enlever les "" ou non ? 
+          return `"${escaped}"`;
+      }).join(',');
+  });
+  return rows.join('\n');
+}
+
+function downloadFile(content, filename, type) {
+  const blob = new Blob([content], { type: type });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function setupExportButtons() {
+  const exportButtons = document.querySelectorAll('.export-btn');
+  
+  // Retirer les événements existants s'il y en a
+  exportButtons.forEach(button => {
+    button.replaceWith(button.cloneNode(true));
+  });
+  // Récupérer les nouveaux boutons après le clonage
+  const newExportButtons = document.querySelectorAll('.export-btn');
+
+  newExportButtons[0].addEventListener('click', () => {
+      if (!tableData) return;
+      const csv = convertToCSV(tableData);
+      const date = new Date().toISOString().split('T')[0];
+      downloadFile(csv, `table_${date}.csv`, 'text/csv');
+  });
+
+  newExportButtons[1].addEventListener('click', () => {
+      if (!tableData) return;
+      const json = JSON.stringify(tableData, null, 2);
+      const date = new Date().toISOString().split('T')[0];
+      downloadFile(json, `table_${date}.json`, 'application/json');
+  });
+}

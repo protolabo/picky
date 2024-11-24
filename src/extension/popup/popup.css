@@ -121,6 +121,25 @@ th {
   position: relative;
 }
 
+.export-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.export-btn {
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.export-btn:hover {
+  background-color: #1976d2;
+}
+
 /* Styles pour la barre de défilement */
 .table-container::-webkit-scrollbar {
   width: 8px;
@@ -157,4 +176,8 @@ body[data-mode="window"] .container {
 
 body[data-mode="window"] .table-container {
   max-height: calc(100vh - 100px);
+}
+
+body[data-mode="window"] .export-buttons {
+  margin-bottom: 20px;
 }

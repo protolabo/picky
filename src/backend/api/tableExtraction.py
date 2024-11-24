@@ -110,8 +110,17 @@ def image_to_2d_array(image):
             row_data.append(text)
 
         table_data.append(row_data)
-
-    return table_data
+    
+    # Trouver la longueur maximale parmi toutes les lignes
+    max_length = max(len(row) for row in table_data)
+    
+    # Créer un nouveau tableau avec des lignes de longueur égale
+    normalized_table = [
+        row + [''] * (max_length - len(row))
+        for row in table_data
+    ]
+    
+    return normalized_table
 
 
 """
