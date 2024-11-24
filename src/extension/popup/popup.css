@@ -140,3 +140,21 @@ th {
 .table-container::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+.container.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+body[data-mode="window"] .container {
+  width: 100%;
+  height: 100vh;
+  max-height: none;
+  margin: 0;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+body[data-mode="window"] .table-container {
+  max-height: calc(100vh - 100px);
+}
