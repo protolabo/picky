@@ -163,6 +163,7 @@ function showResults(data) {
   }
 
   setupEditableTable();
+  setupDeleteButtons(table);
 }
 
 function setupEditableTable() {
@@ -301,4 +302,152 @@ function setupExportButtons() {
       const date = new Date().toISOString().split('T')[0];
       downloadFile(json, `table_${date}.json`, 'application/json');
   });
+}
+
+function setupDeleteButtons(table) {
+  const tbody = table.querySelector('tbody');
+  const rows = tbody.querySelectorAll('tr');
+  const firstRow = rows[0];
+  
+  // boutons de suppression pour les colonnes
+  firstRow.querySelectorAll('td').forEach((cell, colIndex) => {
+      const deleteBtn = createDeleteButton('column', colIndex);
+      table.parentElement.appendChild(deleteBtn);
+      positionDeleteButton(deleteBtn, cell, 'column');
+  });
+
+  // boutons de suppression pour les lignes
+  rows.forEach((row, rowIndex) => {
+      const deleteBtn = createDeleteButton('row', rowIndex);
+      table.parentElement.appendChild(deleteBtn);
+      positionDeleteButton(deleteBtn, row.firstElementChild, 'row');
+  });
+
+  // affichage des boutons au survol
+  table.addEventListener('mouseover', (e) => {
+      const cell = e.target.closest('td');
+      if (cell) {
+          const rowIndex = cell.parentElement.rowIndex;
+          const colIndex = cell.cellIndex;
+          showDeleteButtons(rowIndex, colIndex);
+      }
+  });
+
+  table.addEventListener('mouseout', (e) => {
+      if (!e.relatedTarget?.closest('.table-container')) {
+          hideAllDeleteButtons();
+      }
+  });
+}
+
+function createDeleteButton(type, index) {
+  const button = document.createElement('button');
+  button.className = `delete-button delete-${type}`;
+  button.textContent = '×';
+  button.dataset.type = type;
+  button.dataset.index = index;
+  
+  button.addEventListener('click', () => confirmDelete(type, index));
+  return button;
+}
+
+function positionDeleteButton(button, referenceElement, type) {
+  const rect = referenceElement.getBoundingClientRect();
+  const containerRect = referenceElement.closest('.table-container').getBoundingClientRect();
+  
+  if (type === 'column') {
+    const left = rect.left - containerRect.left + (rect.width / 2);
+    button.style.left = `${left}px`;
+    button.style.top = '5px'; // Position fixe depuis le haut
+  } else { 
+    const top = rect.top - containerRect.top + (rect.height / 2);
+    button.style.top = `${top}px`;
+    button.style.left = '5px'; // Position fixe depuis la gauche
+  }
+}
+
+function showDeleteButtons(rowIndex, colIndex) {
+  const buttons = document.querySelectorAll('.delete-button');
+  buttons.forEach(button => {
+      if ((button.dataset.type === 'row' && button.dataset.index == rowIndex) ||
+          (button.dataset.type === 'column' && button.dataset.index == colIndex)) {
+          button.style.display = 'flex';
+      } else {
+          button.style.display = 'none';
+      }
+  });
+}
+
+function hideAllDeleteButtons() {
+  document.querySelectorAll('.delete-button').forEach(button => {
+      button.style.display = 'none';
+  });
+}
+
+function confirmDelete(type, index) {
+  const modal = createConfirmationModal(type, index);
+  document.body.appendChild(modal);
+}
+
+function createConfirmationModal(type, index) {
+  const modalBackdrop = document.createElement('div');
+  modalBackdrop.className = 'modal-backdrop';
+  
+  const modal = document.createElement('div');
+  modal.className = 'modal';
+  
+  const message = document.createElement('p');
+  message.textContent = `Êtes-vous sûr de vouloir supprimer cette ${type === 'row' ? 'ligne' : 'colonne'} ?`;
+  
+  const buttonContainer = document.createElement('div');
+  buttonContainer.className = 'modal-buttons';
+  
+  const confirmButton = document.createElement('button');
+  confirmButton.textContent = 'Confirmer';
+  confirmButton.className = 'window-btn';
+  confirmButton.onclick = () => {
+      deleteTableElement(type, index);
+      closeModal(modal, modalBackdrop);
+  };
+  
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Annuler';
+  cancelButton.className = 'export-btn';
+  cancelButton.onclick = () => closeModal(modal, modalBackdrop);
+  
+  buttonContainer.appendChild(cancelButton);
+  buttonContainer.appendChild(confirmButton);
+  
+  modal.appendChild(message);
+  modal.appendChild(buttonContainer);
+  
+  modalBackdrop.appendChild(modal);
+  
+  modalBackdrop.style.display = 'block';
+  modal.style.display = 'block';
+  
+  return modalBackdrop;
+}
+
+function closeModal(modal, backdrop) {
+  modal.remove();
+  backdrop.remove();
+}
+
+async function deleteTableElement(type, index) {
+  if (type === 'row') {
+      tableData.splice(index, 1);
+  } else {
+      tableData.forEach(row => {
+          row.splice(index, 1);
+      });
+  }
+  
+  // Si nous sommes en mode fenêtre, mettre à jour le storage
+  if (isWindowMode) {
+      await chrome.storage.local.set({ tableData: tableData });
+  }
+  
+  // Mettre à jour l'affichage
+  showResults(tableData);
 }
