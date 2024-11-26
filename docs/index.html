@@ -463,11 +463,12 @@
                 <li>Pour passer les données du mode popup au mode nouvelle fenêtre, on stocke le tableau dans chrome.storage.local qu'on va récupérer et afficher avec showResults.</li>
                 <li>Cacher ou griser le tableau dans le popup quand on ouvre le tableau en plein écran.</li>
                 <li>Ajout de l'exportation en csv et json.</li>
-                
+                <li>Ajout de la possibilité de merge des cellules horizontalement</li>
+                <li>Ajout de la fonctionnalité de supprimer ligne/colonne.</li>
             </ul>
             
             <h4 class="title">Notes</h4>
-            <p></p>
+            <p>Le merge ne se fait pas réellement au niveau des données, mais plutôt sur une couche de présentation qui est liée à la couche de données. Cela permet de préserver l'intégrité des données tout en offrant une flexibilité dans la présentation. Lors de l'exportation, seules les données brutes sont prises en compte.<br>Dans notre tableData qui contient le vrai tableau, on met "_" dans la cellule fusionnée pour signifier qu'elle est merged avec celle d'avant, afin de garder le même nombre de cellules dans chaque ligne. On va l'exporter tel quel en CSV (inspiré par l'exportation sur Microsoft Excel), mais en JSON, on ignore les "_".</p>
             </p>
         </div>
     </section>
@@ -475,7 +476,7 @@
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 24 novembre 2024</p>
+        <p>Dernière mise à jour: 25 novembre 2024</p>
     </footer>
 
     <script>
