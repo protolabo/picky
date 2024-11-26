@@ -1,5 +1,8 @@
 let tableData = null;
 let isWindowMode = false;
+let selectedCells = [];
+let isSelecting = false;
+let contextMenu = null;
 
 document.addEventListener('DOMContentLoaded', async function() {
     // Vérifier si nous sommes dans la fenêtre ou le popup
@@ -140,10 +143,13 @@ function showResults(data) {
   // Ajouter chaque ligne de données
   data.forEach((row, rowIndex) => {
     const tr = document.createElement('tr');
-    row.forEach((cell, cellIndex) => {
-      const td = createEditableCell(cell, rowIndex, cellIndex);
-      tr.appendChild(td);
-    });
+    for(let cellIndex = 0; cellIndex < row.length; cellIndex++) {
+        // Si c'est une cellule fusionnée ('_'), on la saute
+        if (row[cellIndex] === '_') continue;
+        
+        const td = createEditableCell(row[cellIndex], rowIndex, cellIndex);
+        tr.appendChild(td);
+    }
     tbody.appendChild(tr);
   });
   
@@ -164,6 +170,7 @@ function showResults(data) {
 
   setupEditableTable();
   setupDeleteButtons(table);
+  setupCellSelection(table);
 }
 
 function setupEditableTable() {
@@ -199,9 +206,27 @@ function createEditableCell(content, rowIndex, cellIndex) {
   const td = document.createElement('td');
   const div = document.createElement('div');
   div.className = 'editable-cell';
-  div.textContent = content;
   div.dataset.row = rowIndex;
   div.dataset.cell = cellIndex;
+  
+  // Compter combien de cellules sont fusionnées à droite
+  let mergeCount = 0;
+  let nextIndex = cellIndex + 1;
+  while (nextIndex < tableData[rowIndex].length && tableData[rowIndex][nextIndex] === '_') {
+      mergeCount++;
+      nextIndex++;
+  }
+  
+  if (mergeCount > 0) {
+      td.classList.add('merged-source');
+      // Ajouter la classe merge-end si c'est la dernière cellule visible de la ligne
+      if (cellIndex + mergeCount === tableData[rowIndex].length - 1) {
+          td.classList.add('merge-end');
+      }
+      td.colSpan = mergeCount + 1;
+  }
+  
+  div.textContent = content;
   td.appendChild(div);
   return td;
 }
@@ -267,6 +292,16 @@ function convertToCSV(data) {
   return rows.join('\n');
 }
 
+function convertToJSON(data) {
+  return JSON.stringify(
+      data.map(row => 
+          row.filter(cell => cell !== '_')
+      ),
+      null, 
+      2
+  );
+}
+
 function downloadFile(content, filename, type) {
   const blob = new Blob([content], { type: type });
   const url = URL.createObjectURL(blob);
@@ -298,7 +333,7 @@ function setupExportButtons() {
 
   newExportButtons[1].addEventListener('click', () => {
       if (!tableData) return;
-      const json = JSON.stringify(tableData, null, 2);
+      const json = convertToJSON(tableData);
       const date = new Date().toISOString().split('T')[0];
       downloadFile(json, `table_${date}.json`, 'application/json');
   });
@@ -449,5 +484,174 @@ async function deleteTableElement(type, index) {
   }
   
   // Mettre à jour l'affichage
+  showResults(tableData);
+}
+
+function setupCellSelection(table) {
+  // Créer le menu contextuel
+  createContextMenu();
+  
+  // Gestionnaire de la sélection
+  table.addEventListener('mousedown', (e) => {
+      if (e.button === 0) { // Clic gauche
+          const cell = e.target.closest('.editable-cell');
+          if (!cell) return;
+          
+          if (!e.ctrlKey) {
+              clearSelection();
+          }
+          
+          toggleCellSelection(cell);
+          isSelecting = true;
+      }
+  });
+  
+  table.addEventListener('mouseover', (e) => {
+      if (!isSelecting) return;
+      
+      const cell = e.target.closest('.editable-cell');
+      if (cell && !cell.classList.contains('selected')) {
+          toggleCellSelection(cell);
+      }
+  });
+  
+  document.addEventListener('mouseup', () => {
+      isSelecting = false;
+      validateSelection();
+  });
+  
+  // Gestionnaire du menu contextuel
+  table.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const cell = e.target.closest('.editable-cell');
+      if (!cell) return;
+      
+      if (selectedCells.length > 1) {
+          showContextMenu(e.pageX, e.pageY);
+      }
+  });
+}
+
+function createContextMenu() {
+  contextMenu = document.createElement('div');
+  contextMenu.className = 'context-menu';
+  
+  const mergeOption = document.createElement('div');
+  mergeOption.className = 'context-menu-item';
+  mergeOption.textContent = 'Fusionner les cellules';
+  mergeOption.onclick = mergeCells;
+  
+  contextMenu.appendChild(mergeOption);
+  document.body.appendChild(contextMenu);
+  
+  // Fermer le menu au clic ailleurs
+  document.addEventListener('click', (e) => {
+      if (!e.target.closest('.context-menu')) {
+          hideContextMenu();
+      }
+  });
+}
+
+function showContextMenu(x, y) {
+  contextMenu.style.display = 'block';
+  contextMenu.style.left = `${x}px`;
+  contextMenu.style.top = `${y}px`;
+}
+
+function hideContextMenu() {
+  if (contextMenu) {
+      contextMenu.style.display = 'none';
+  }
+}
+
+function toggleCellSelection(cell) {
+  cell.classList.toggle('selected');
+  if (cell.classList.contains('selected')) {
+      selectedCells.push(cell);
+  } else {
+      selectedCells = selectedCells.filter(c => c !== cell);
+  }
+}
+
+function clearSelection() {
+  selectedCells.forEach(cell => {
+      cell.classList.remove('selected');
+  });
+  selectedCells = [];
+}
+
+function validateSelection() {
+  if (selectedCells.length <= 1) {
+      clearSelection();
+      return;
+  }
+  
+  // Vérifier que les cellules sont sur la même ligne
+  const firstRow = selectedCells[0].closest('tr');
+  const allSameRow = selectedCells.every(cell => cell.closest('tr') === firstRow);
+  
+  if (allSameRow) {
+      // Obtenir tous les indices réels disponibles (non fusionnés) dans la ligne
+      const rowIndex = parseInt(firstRow.firstElementChild.querySelector('.editable-cell').dataset.row);
+      const availableIndices = tableData[rowIndex]
+          .map((cell, index) => cell !== '_' ? index : -1)
+          .filter(index => index !== -1);
+
+      // Obtenir les indices des cellules sélectionnées
+      const selectedIndices = selectedCells
+          .map(cell => parseInt(cell.dataset.cell))
+          .sort((a, b) => a - b);
+
+      // Vérifier que les indices sélectionnés sont consécutifs dans availableIndices
+      const selectedPositions = selectedIndices.map(index => availableIndices.indexOf(index));
+      const isAdjacent = selectedPositions.every((pos, idx) => {
+          return idx === 0 || pos === selectedPositions[idx - 1] + 1;
+      });
+
+      if (!isAdjacent) {
+          selectedCells.forEach(cell => cell.classList.add('invalid-selection'));
+          setTimeout(() => {
+              selectedCells.forEach(cell => cell.classList.remove('invalid-selection'));
+              clearSelection();
+          }, 1000);
+      }
+  } else {
+      clearSelection();
+  }
+}
+
+async function mergeCells() {
+  if (selectedCells.length <= 1) return;
+  
+  // Obtenir les indices triés
+  const rowIndex = parseInt(selectedCells[0].dataset.row);
+  const cellIndices = selectedCells
+      .map(cell => parseInt(cell.dataset.cell))
+      .sort((a, b) => a - b);
+  
+  // Créer le contenu fusionné avec tous les contenus
+  let mergedContent = cellIndices
+      .map(index => tableData[rowIndex][index])
+      .join(' ');
+  
+  // Mettre à jour les données
+  cellIndices.forEach((cellIndex, idx) => {
+      if (idx === 0) {
+          // Première cellule : contient le contenu fusionné
+          tableData[rowIndex][cellIndex] = mergedContent;
+      } else {
+          // Autres cellules : marquées comme fusionnées
+          tableData[rowIndex][cellIndex] = '_';
+      }
+  });
+
+  // Si nous sommes en mode fenêtre, mettre à jour le storage
+  if (isWindowMode) {
+      await chrome.storage.local.set({ tableData: tableData });
+  }
+  
+  // Mettre à jour l'affichage
+  hideContextMenu();
+  clearSelection();
   showResults(tableData);
 }
