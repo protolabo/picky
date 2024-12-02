@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', async function() {
             tableData = storedData.tableData;
             showResults(tableData);
             setupExportButtons();
+            setupPreviewTabs();
         }
     } else {
         // Mode popup 
@@ -238,6 +239,8 @@ function showResults(data) {
     openWindowBtn.classList.remove('hidden'); 
     errorDiv.classList.add('hidden');
     exportButtons.classList.remove('hidden');
+  } else {
+    updatePreview();
   }
 
   setupEditableTable();
@@ -358,7 +361,7 @@ function convertToCSV(data) {
           // Échapper les virgules et les guillemets
           const escaped = cell.toString().replace(/"/g, '""');
           // TODO: enlever les "" ou non ? 
-          return `"${escaped}"`;
+          return `${escaped}`;
       }).join(',');
   });
   return rows.join('\n');
@@ -772,4 +775,38 @@ async function mergeCells() {
   hideContextMenu();
   clearSelection();
   showResults(tableData);
+}
+
+function setupPreviewTabs() {
+  const tabs = document.querySelectorAll('.tab');
+  const previewPanels = document.querySelectorAll('.preview-panel');
+  
+  // Gestionnaire de clic sur les onglets
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      // Retirer la classe active de tous les onglets et panels
+      tabs.forEach(t => t.classList.remove('active'));
+      previewPanels.forEach(p => p.classList.remove('active'));
+      
+      // Ajouter la classe active à l'onglet cliqué et son panel
+      tab.classList.add('active');
+      const tabType = tab.dataset.tab;
+      document.getElementById(`preview-${tabType}`).classList.add('active');
+      
+      // Mettre à jour l'aperçu
+      updatePreview();
+    });
+  });
+}
+
+function updatePreview() {
+  if (!tableData) return;
+  
+  // Mettre à jour l'aperçu CSV
+  const csvPreview = document.querySelector('#preview-csv .preview-code');
+  csvPreview.textContent = convertToCSV(tableData);
+  
+  // Mettre à jour l'aperçu JSON
+  const jsonPreview = document.querySelector('#preview-json .preview-code');
+  jsonPreview.textContent = convertToJSON(tableData);
 }

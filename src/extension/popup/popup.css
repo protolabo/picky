@@ -304,3 +304,50 @@ table {
   background-color: #ffebee;
   border: 2px solid #f44336;
 }
+
+/* Style pour la prévisualisation */
+.preview-section {
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.preview-tabs {
+  display: flex;
+  background: #f5f5f5;
+  border-bottom: 1px solid #ddd;
+}
+
+.tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+}
+
+.tab.active {
+  background: white;
+  border-bottom: 2px solid #2196f3;
+  color: #2196f3;
+}
+
+.preview-content {
+  max-height: 300px;
+  overflow: auto;
+}
+
+.preview-panel {
+  display: none;
+  padding: 15px;
+  background: white;
+}
+
+.preview-panel.active {
+  display: block;
+}
+
+.preview-code {
+  font-family: monospace;
+  white-space: pre;
+  overflow-x: auto;
+}
