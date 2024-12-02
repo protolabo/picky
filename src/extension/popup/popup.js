@@ -133,6 +133,7 @@ function setupPopupInterface() {
 }
 
 function showResults(data) {
+  console.log(data);
   // Création du tableau HTML
   const tableContainer = document.querySelector('.table-container');
   const table = document.createElement('table');
@@ -209,21 +210,21 @@ function createEditableCell(content, rowIndex, cellIndex) {
   div.dataset.row = rowIndex;
   div.dataset.cell = cellIndex;
   
-  // Compter combien de cellules sont fusionnées à droite
   let mergeCount = 0;
   let nextIndex = cellIndex + 1;
+  
   while (nextIndex < tableData[rowIndex].length && tableData[rowIndex][nextIndex] === '_') {
-      mergeCount++;
-      nextIndex++;
+    mergeCount++;
+    nextIndex++;
   }
   
   if (mergeCount > 0) {
-      td.classList.add('merged-source');
-      // Ajouter la classe merge-end si c'est la dernière cellule visible de la ligne
-      if (cellIndex + mergeCount === tableData[rowIndex].length - 1) {
-          td.classList.add('merge-end');
-      }
-      td.colSpan = mergeCount + 1;
+    td.classList.add('merged-source');
+    if (nextIndex === tableData[rowIndex].length) {
+      td.classList.add('merge-end');
+    }
+    td.colSpan = mergeCount + 1;
+    div.dataset.colspan = mergeCount + 1;
   }
   
   div.textContent = content;
@@ -342,37 +343,63 @@ function setupExportButtons() {
 function setupDeleteButtons(table) {
   const tbody = table.querySelector('tbody');
   const rows = tbody.querySelectorAll('tr');
-  const firstRow = rows[0];
+
+  // Nettoyer les anciens boutons
+  document.querySelectorAll('.delete-button').forEach(btn => btn.remove());
   
-  // boutons de suppression pour les colonnes
-  firstRow.querySelectorAll('td').forEach((cell, colIndex) => {
-      const deleteBtn = createDeleteButton('column', colIndex);
-      table.parentElement.appendChild(deleteBtn);
-      positionDeleteButton(deleteBtn, cell, 'column');
+  // Pour chaque colonne du tableau de données
+  tableData[0].forEach((_, colIndex) => {
+    const deleteBtn = createDeleteButton('column', colIndex);
+    table.parentElement.appendChild(deleteBtn);
+    
+    // Trouver la cellule visible pour cette colonne
+    const firstVisibleCell = findFirstVisibleCell(rows[0], colIndex);
+    if (firstVisibleCell) {
+      positionDeleteButton(deleteBtn, firstVisibleCell, 'column', colIndex);
+    }
   });
 
-  // boutons de suppression pour les lignes
+  // Boutons de suppression pour les lignes
   rows.forEach((row, rowIndex) => {
-      const deleteBtn = createDeleteButton('row', rowIndex);
-      table.parentElement.appendChild(deleteBtn);
-      positionDeleteButton(deleteBtn, row.firstElementChild, 'row');
+    const deleteBtn = createDeleteButton('row', rowIndex);
+    table.parentElement.appendChild(deleteBtn);
+    positionDeleteButton(deleteBtn, row.firstElementChild, 'row', rowIndex);
   });
 
-  // affichage des boutons au survol
+  // Gestion de l'affichage des boutons au survol
   table.addEventListener('mouseover', (e) => {
-      const cell = e.target.closest('td');
-      if (cell) {
-          const rowIndex = cell.parentElement.rowIndex;
-          const colIndex = cell.cellIndex;
-          showDeleteButtons(rowIndex, colIndex);
-      }
+    const cell = e.target.closest('td');
+    if (cell) {
+      const rowIndex = getRowIndex(cell);
+      const colIndices = getColumnIndices(cell);
+      showDeleteButtons(rowIndex, colIndices);
+    }
   });
 
   table.addEventListener('mouseout', (e) => {
-      if (!e.relatedTarget?.closest('.table-container')) {
-          hideAllDeleteButtons();
-      }
+    if (!e.relatedTarget?.closest('.table-container')) {
+      hideAllDeleteButtons();
+    }
   });
+}
+
+// Trouver la première cellule visible d'une colonne
+function findFirstVisibleCell(row, targetIndex) {
+  let dataIndex = 0;  // Index dans tableData
+  let visualIndex = 0;  // Index visuel
+  
+  for (const cell of row.cells) {
+    const colspan = parseInt(cell.colSpan) || 1;
+    // Si l'index cible est dans la plage de cette cellule
+    if (visualIndex <= targetIndex && targetIndex < visualIndex + colspan) {
+      // Retourner la cellule avec l'index réel des données
+      cell.dataset.realIndex = dataIndex;
+      return cell;
+    }
+    visualIndex += colspan;
+    dataIndex += colspan;  // Avancer l'index des données du nombre de cellules fusionnées
+  }
+  return null;
 }
 
 function createDeleteButton(type, index) {
@@ -386,30 +413,44 @@ function createDeleteButton(type, index) {
   return button;
 }
 
-function positionDeleteButton(button, referenceElement, type) {
+function positionDeleteButton(button, referenceElement, type, index) {
   const rect = referenceElement.getBoundingClientRect();
   const containerRect = referenceElement.closest('.table-container').getBoundingClientRect();
   
   if (type === 'column') {
-    const left = rect.left - containerRect.left + (rect.width / 2);
+    const colspan = parseInt(referenceElement.colSpan) || 1;
+    const realIndex = parseInt(referenceElement.dataset.realIndex);
+    const cellWidth = rect.width / colspan;
+    const offset = index - realIndex;  // Calculer le décalage dans la cellule fusionnée
+    const left = rect.left - containerRect.left + offset * cellWidth + (cellWidth / 2);
     button.style.left = `${left}px`;
-    button.style.top = '5px'; // Position fixe depuis le haut
-  } else { 
+    button.style.top = '5px';
+  } else {
     const top = rect.top - containerRect.top + (rect.height / 2);
     button.style.top = `${top}px`;
-    button.style.left = '5px'; // Position fixe depuis la gauche
+    button.style.left = '5px';
   }
 }
 
-function showDeleteButtons(rowIndex, colIndex) {
+function getRowIndex(cell) {
+  return cell.closest('tr').rowIndex;
+}
+
+function getColumnIndices(cell) {
+  const startIndex = parseInt(cell.querySelector('.editable-cell')?.dataset.cell);
+  const colspan = parseInt(cell.colSpan) || 1;
+  return Array.from({length: colspan}, (_, i) => startIndex + i);
+}
+
+function showDeleteButtons(rowIndex, colIndices) {
   const buttons = document.querySelectorAll('.delete-button');
   buttons.forEach(button => {
-      if ((button.dataset.type === 'row' && button.dataset.index == rowIndex) ||
-          (button.dataset.type === 'column' && button.dataset.index == colIndex)) {
-          button.style.display = 'flex';
-      } else {
-          button.style.display = 'none';
-      }
+    if ((button.dataset.type === 'row' && button.dataset.index == rowIndex) ||
+        (button.dataset.type === 'column' && colIndices.includes(parseInt(button.dataset.index)))) {
+      button.style.display = 'flex';
+    } else {
+      button.style.display = 'none';
+    }
   });
 }
 
@@ -473,17 +514,23 @@ async function deleteTableElement(type, index) {
   if (type === 'row') {
       tableData.splice(index, 1);
   } else {
+      // Suppression de colonne
       tableData.forEach(row => {
+          const value = row[index];
+          const nextValue = row[index + 1];
+
+          if (value !== '_' && nextValue === '_') {
+              // Si la colonne suivante est fusionnée, déplacer le contenu
+              row[index + 1] = value;
+          }
           row.splice(index, 1);
       });
   }
   
-  // Si nous sommes en mode fenêtre, mettre à jour le storage
   if (isWindowMode) {
       await chrome.storage.local.set({ tableData: tableData });
   }
   
-  // Mettre à jour l'affichage
   showResults(tableData);
 }
 
