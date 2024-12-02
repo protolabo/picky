@@ -27,7 +27,7 @@
   color: #666;
 }
 
-#upload-btn {
+#upload-btn, #capture-btn {
   background-color: #2196f3;
   color: white;
   border: none;

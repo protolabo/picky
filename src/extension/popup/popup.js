@@ -3,6 +3,7 @@ let isWindowMode = false;
 let selectedCells = [];
 let isSelecting = false;
 let contextMenu = null;
+let loadingDiv, errorDiv, resultDiv, openWindowBtn;
 
 document.addEventListener('DOMContentLoaded', async function() {
     // Vérifier si nous sommes dans la fenêtre ou le popup
@@ -21,17 +22,26 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Mode popup 
         setupPopupInterface();
         setupExportButtons();
+
+        // Vérifier s'il y a une image capturée à traiter
+        const { capturedImage } = await chrome.storage.local.get(['capturedImage']);
+        if (capturedImage) {
+            processImage(capturedImage);
+        }
     }
 });
 
 function setupPopupInterface() {
+  // Assignation aux variables globales
+  loadingDiv = document.getElementById('loading');
+  errorDiv = document.getElementById('error');
+  resultDiv = document.getElementById('result');
+  openWindowBtn = document.getElementById('open-window-div');
+
   const dropZone = document.getElementById('drop-zone');
   const fileInput = document.getElementById('file-input');
   const uploadBtn = document.getElementById('upload-btn');
-  const loadingDiv = document.getElementById('loading');
-  const errorDiv = document.getElementById('error');
-  const resultDiv = document.getElementById('result');
-  const openWindowBtn = document.getElementById('open-window-div');
+  const captureBtn = document.getElementById('capture-btn');
 
   // Gestion du drag & drop
   dropZone.addEventListener('dragover', (e) => {
@@ -64,57 +74,33 @@ function setupPopupInterface() {
     }
   });
 
-  async function processImage(file) {
-    if (!file.type.startsWith('image/')) {
-      showError('Le fichier doit être une image.');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    showLoading();
-    
+  // Gestion du bouton capturer
+  captureBtn.addEventListener('click', async () => {
     try {
-      const response = await fetch('http://localhost:8000/extract-table', {
-        method: 'POST',
-        body: formData
-      });
+        // Obtenir l'onglet actif
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        
+        // Injecter html2canvas
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['libs/html2canvas.min.js']
+        });
 
-      const result = await response.json();
+        // Injecter le script de capture
+        await chrome.scripting.executeScript({
+            target: { tabId: tab.id },
+            files: ['popup/capture.js']
+        });
 
-      if (!result.success) {
-        showError(result.message);
-        return;
-      }
+        // Fermer le popup
+        window.close();
 
-      tableData = result.data; // Stocker les données
-      showResults(result.data);
     } catch (error) {
-      showError('Erreur lors du traitement de l\'image: ' + error.message);
-    } finally {
-      hideLoading();
+        console.error('Erreur lors de l\'injection du script :', error);
     }
-  }
+  });
 
-  function showLoading() {
-    loadingDiv.classList.remove('hidden');
-    errorDiv.classList.add('hidden');
-    resultDiv.classList.add('hidden');
-    openWindowBtn.classList.add('hidden');
-  }
-
-  function hideLoading() {
-    loadingDiv.classList.add('hidden');
-  }
-
-  function showError(message) {
-    errorDiv.textContent = message;
-    errorDiv.classList.remove('hidden');
-    resultDiv.classList.add('hidden');
-    openWindowBtn.classList.add('hidden');
-  }
-  
+  // Gestion du bouton ouvrir dans une nouvelle fenêtre  
   openWindowBtn.addEventListener('click', async () => {
     // Sauvegarder les données actuelles
     await chrome.storage.local.set({ tableData: tableData });
@@ -129,7 +115,92 @@ function setupPopupInterface() {
 
     // Griser l'interface du popup
     document.querySelector('.container').classList.add('disabled');
-});
+  });
+}
+
+function showLoading() {
+  loadingDiv.classList.remove('hidden');
+  errorDiv.classList.add('hidden');
+  resultDiv.classList.add('hidden');
+  openWindowBtn.classList.add('hidden');
+}
+
+function hideLoading() {
+  loadingDiv.classList.add('hidden');
+}
+
+function showError(message) {
+  errorDiv.textContent = message;
+  errorDiv.classList.remove('hidden');
+  resultDiv.classList.add('hidden');
+  openWindowBtn.classList.add('hidden');
+}
+
+async function processImage(input) {
+  showLoading();
+  
+  try {
+    let formData;
+    let options;
+    
+    if (input instanceof File) {
+      // Cas d'un fichier uploaded
+      if (!input.type.startsWith('image/')) {
+        showError('Le fichier doit être une image.');
+        return;
+      }
+      formData = new FormData();
+      formData.append('file', input);
+      options = {
+        method: 'POST',
+        body: formData
+      };
+    } else {
+      // Cas d'une image base64 (capture)
+      const imageBlob = await base64ToBlob(input);
+      const imageFile = new File([imageBlob], 'screenshot.png', { type: 'image/png' });
+      formData = new FormData();
+      formData.append('file', imageFile);
+      options = {
+        method: 'POST',
+        body: formData
+      };
+      // Nettoyer le storage 
+      chrome.storage.local.remove(['capturedImage']);
+    }
+
+    const response = await fetch('http://localhost:8000/extract-table', options);
+    const result = await response.json();
+
+    if (!result.success) {
+      showError(result.message);
+      return;
+    }
+
+    tableData = result.data;
+    showResults(result.data);
+    setupExportButtons();
+  } catch (error) {
+    showError('Erreur lors du traitement de l\'image: ' + error.message);
+  } finally {
+    hideLoading();
+  }
+}
+
+function base64ToBlob(base64String) {
+  // Remove data URL prefix if present
+  const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
+  
+  // Convert base64 to binary
+  const binaryString = atob(base64Data);
+  const length = binaryString.length;
+  const bytes = new Uint8Array(length);
+  
+  for (let i = 0; i < length; i++) {
+    bytes[i] = binaryString.charCodeAt(i);
+  }
+  
+  return new Blob([bytes], { type: 'image/png' });
 }
 
 function showResults(data) {
