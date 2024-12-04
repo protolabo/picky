@@ -446,7 +446,7 @@
                 Semaine 11 &ndash;
                 <time datetime="2024-11-18">Lundi 18 novembre 2024</time>
             </h3>
-            <p>3ème version de l'extension: Exporter les données</p>
+            <p>3ème version de l'extension: Exporter les données & Merge & Supprimer ligne/colonne</p>
         </header>
         <div class="week-content">
             <h4 class="title">Objectifs</h4>
@@ -472,11 +472,46 @@
             </p>
         </div>
     </section>
+    <section class="week">
+        <header class="week-header">
+            <h3 class="week-title">
+                Semaine 12 &ndash;
+                <time datetime="2024-11-25">Lundi 25 novembre 2024</time>
+            </h3>
+            <p>4éme version de l'extension: Intégration de html2canvas</p>
+        </header>
+        <div class="week-content">
+            <h4 class="title">Objectifs</h4>
+            <ul>
+                <li>Intégrer html2canvas pour capturer le tableau dans la page web.</li>
+                <li>Permettre à l'utilisateur de sélectionner le tableau à extraire à partir d'une page web.</li>
+                <li>Corriger le bug de suppression des colonnes après avoir fait une fusion.</li>
+                <li>Ajouter la fonctionnalité d'aperçu des données avant de les extraire.</li>
+            </ul>
+            <h4 class="title">Réalisations</h4>
+            <ul>
+                <li>Intégration de html2canvas pour capturer le tableau dans la page web.</li>
+                <li>L'utilisateur peut maintenant sélectionner le tableau à extraire à partir d'une page web.</li>
+                <li>Corriger le bug de suppression des colonnes après avoir fait une fusion. La manipulation se fait encore une fois dans tableData et on appelle showResults après. Si on supprime une colonne on parcourt cette colonne dans tableData: si la cellule est "_" càd merged avec une autre donc on peut la supprimer, mais si on trouve un string valide dans la cellule alors on check si la suivante est merged avec elle (contient "_") dans ce cas on transfère le texte de la cellule qu'on veut supprimer à la cellule suivante, sinon on supprime simplement la cellule.</li>
+                <li>Ajout de la fonctionnalité d'aperçu des données avant de les extraire.
+                    <ul>
+                        <li>L'apperçu est en temps réel, donc chaque modification dans le tableau est reflétée dans l'aperçu pour avoir une idée comment les données seront exportées.</li>
+                        <li>On utilise des onglets "CSV" et "JSON"  qui permettent à l'utilisateur de basculer facilement entre les 2 aperçus.</li>
+                    </ul>
+                    <br>
+                    <img src="images/extensionV4.1.png" alt="Aperçu export">
+                </li>
+            </ul>
+            
+            <h4 class="title">Notes</h4>
+            <p>Pour ajouter la fonctionnalité de capture, on injecte le code de html2canvas (capture.js) dans la page web. Après la capture, on stocke l'image dans le chrome storage afin de pouvoir rouvrir l'extension et effectuer processImage.</p>
+        </div>
+    </section>
     </main>
 
     <footer class="page-footer">
         <a href="https://github.com/protolabo/picky" target="_blank">Répertoire GitHub</a>
-        <p>Dernière mise à jour: 25 novembre 2024</p>
+        <p>Dernière mise à jour: 2 décembre 2024</p>
     </footer>
 
     <script>
