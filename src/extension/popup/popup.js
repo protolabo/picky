@@ -340,6 +340,7 @@ async function finishEditing(editor) {
     // Si nous sommes en mode fenêtre, mettre à jour le storage
     if (isWindowMode) {
         await chrome.storage.local.set({ tableData: tableData });
+        updatePreview();
     }
     
     // Mettre à jour l'affichage
