@@ -66,7 +66,7 @@
             </p>		
 
             <p>
-                Picky est une extension de navigateur web conçue pour faciliter l'extraction de données tabulaires. Elle prend en charge la conversion de tableaux (provenant de captures d'écran) présents sur une page web en divers formats d'export, tels que CSV ou JSON. Les données extraites peuvent être filtrées ou modifiées (sans ajout) pour plus de flexibilité et une meilleure interopérabilité avec les clients potentiels. Picky utilise des techniques de traitement d'image et de traitement du langage naturel (NLP) pour améliorer la précision et la qualité des résultats.
+                Picky est une extension de navigateur web conçue pour faciliter l'extraction de données tabulaires. Elle prend en charge la conversion de tableaux (provenant de captures d'écran) présents sur une page web en divers formats d'export, tels que CSV ou JSON. Les données extraites peuvent être filtrées ou modifiées pour plus de flexibilité et une meilleure interopérabilité avec les clients potentiels. Picky utilise des techniques de traitement d'image pour améliorer la précision et la qualité des résultats.
             </p>
         </header>
 
@@ -133,11 +133,11 @@
             <ul>
                 <li><b>Backend</b>: Le backend de l'application est développé en Python, utilisant le framework FastAPI pour la création du REST API.
                 </li>
-                <li><b>Frontend</b>: Le frontend de l'application est développé en React, permettant une interface utilisateur interactive et réactive.
+                <li><b>Frontend</b>: Le frontend de l'application est développé en HTML, CSS et JavaScript permettant une interface utilisateur interactive et réactive.
                 </li>
                 <li><b>Traitement d'image et extraction des données</b>: Le traitement d'image et l'extraction des données sont réalisés en utilisant les bibliothèques OpenCV et Tesseract.
                 </li>
-                <li><b>Manipulation des données</b>: La manipulation des données extraites est effectuée en utilisant la bibliothèque Pandas, permettant un traitement efficace des données tabulaires.
+                <li><b>Manipulation des données</b>: La manipulation des données extraites est effectuée en utilisant la bibliothèque Numpy, permettant un traitement efficace des données tabulaires.
                 </li>
             </ul>
 
@@ -256,7 +256,7 @@
                                 </li>
                                 <li>Autres méthodes : do-to-image, API de capture d'écran sur Chrome et d'autres projets random sur github. Ces alternatives se sont avérées soit incomplètes, soit nécessitant des permissions supplémentaires, ce qui pourrait nuire à l'expérience utilisateur.</li>
                             </ul>
-                            En conclusion, je pense que c'est mieux de commencer avec html2canvas pour sa facilité d'utilisation et sa large compatibilité. Si des problèmes de performance se manifestent vers la fin du projet, nous envisagerons soit de passer à un autre outil, soit de modifier la logique du projet, par exemple en optant pour une approche de glisser-déposer d'image, de téléchargement d'image...
+                            En conclusion, je pense que c'est mieux de commencer avec html2canvas pour sa facilité d'utilisation et sa large compatibilité. Si des problèmes de performance se manifestent vers la fin du projet, nous envisagerons soit de passer à un autre outil...
                         </li>
                     </ul>
 
@@ -296,7 +296,7 @@
                     <h4 class="title">Notes</h4>
                     <p>Cette première version du script marche bien dans la plupart des images de tests, mais jusqu'à maintenant on 2 problèmes:
                         <ul>
-                            <li>La fonction findContours retourne aussi le contour externe du tableau donc il faut trouver une fonciton qui filtre ces contours et élimine les conteurs externes, j'ai jusqu'à maintenant 3 solutions à discuter:
+                            <li>La fonction findContours retourne aussi le contour externe du tableau donc il faut trouver une fonction qui filtre ces contours et élimine les conteurs externes, j'ai jusqu'à maintenant 3 solutions à discuter:
                                 <br>
                                 - skip le premier contours à l'index i=0 car il est le contour externe le plus grand. Elle fonctionne dans notre cas car avec RETR_TREE les contours sont organisés dans une hiérarchie parent-enfant basée sur leur imbrication dans l'image (Il se peut que cette méthode ne marche pas bien si on a beacoup de tableau imbriqué dans l'image)
                                 <br>
