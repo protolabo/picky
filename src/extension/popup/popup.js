@@ -253,8 +253,9 @@ function setupEditableTable() {
   
   table.addEventListener('dblclick', (e) => {
     const cell = e.target.closest('.editable-cell');
-    if (!cell) return;
-    
+    if (!cell || cell.classList.contains('selected')) return; // Ne pas permettre l'édition si la cellule est sélectionnée
+
+    clearSelection(); // Nettoyer toute sélection existante avant d'éditer
     startEditing(cell);
   });
 
@@ -619,12 +620,16 @@ function setupCellSelection(table) {
           const cell = e.target.closest('.editable-cell');
           if (!cell) return;
           
+          // Si on est en train d'éditer une cellule, ne pas démarrer la sélection
+          if (document.querySelector('.cell-editor')) return;
+
           if (!e.ctrlKey) {
               clearSelection();
           }
           
           toggleCellSelection(cell);
           isSelecting = true;
+          e.preventDefault(); // Empêcher la sélection de texte par défaut
       }
   });
   
@@ -638,8 +643,10 @@ function setupCellSelection(table) {
   });
   
   document.addEventListener('mouseup', () => {
+    if (isSelecting) {
       isSelecting = false;
       validateSelection();
+    }
   });
   
   // Gestionnaire du menu contextuel
@@ -687,6 +694,9 @@ function hideContextMenu() {
 }
 
 function toggleCellSelection(cell) {
+  // Vérifier si on est en train d'éditer
+  if (cell.querySelector('.cell-editor')) return;
+
   cell.classList.toggle('selected');
   if (cell.classList.contains('selected')) {
       selectedCells.push(cell);
@@ -698,8 +708,10 @@ function toggleCellSelection(cell) {
 function clearSelection() {
   selectedCells.forEach(cell => {
       cell.classList.remove('selected');
+      cell.classList.remove('invalid-selection');
   });
   selectedCells = [];
+  hideContextMenu();
 }
 
 function validateSelection() {
