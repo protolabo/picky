@@ -24,6 +24,7 @@ def validate_table_image(image, min_table_area_ratio = 0.5):
                   - L'image est nette et bien éclairée
                   - L'image contient un tableau
                   - Le tableau est centré dans l'image
+
                 Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
@@ -55,6 +56,7 @@ def validate_table_image(image, min_table_area_ratio = 0.5):
                   - L'image est nette et bien éclairée
                   - L'image contient un tableau
                   - Le tableau est centré dans l'image
+
                 Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
@@ -66,6 +68,7 @@ def validate_table_image(image, min_table_area_ratio = 0.5):
                 Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
                   - L'image est nette et bien éclairée
                   - L'image contient un seul tableau
+                  
                 Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
