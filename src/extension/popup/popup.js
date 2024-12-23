@@ -359,12 +359,15 @@ if (isWindowMode) {
 
 function convertToCSV(data) {
   const rows = data.map(row => {
-      return row.map(cell => {
-          // Échapper les virgules et les guillemets
-          const escaped = cell.toString().replace(/"/g, '""');
-          // TODO: enlever les "" ou non ? 
-          return `${escaped}`;
-      }).join(',');
+    return row.map(cell => {
+      const stringValue = cell?.toString() || '';
+      // Remplacer les sauts de ligne par \n littéral
+      const withNewlines = stringValue.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
+      // Échapper les guillemets
+      const escaped = withNewlines.replace(/"/g, '""');
+      
+      return `${escaped}`;
+    }).join(',');
   });
   return rows.join('\n');
 }

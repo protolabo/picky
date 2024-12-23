@@ -4,33 +4,43 @@
 
 ## Description du projet 
 
-Ce projet vise à développer une extension de navigateur capable de convertir des tableaux présents sur des pages web ou des captures d'écran en divers formats d'export (CSV, JSON). L'outil permettra de sélectionner les données capturées (lignes, colonnes, valeurs) à exporter.
+Picky est une extension de navigateur conçue pour extraire et manipuler des données tabulaires depuis des pages web. Elle permet de convertir des tableaux, qu'ils soient présents sur une page web ou dans des captures d'écran, en formats d'export communs (CSV, JSON).
 
 ### Fonctionnalités
-- **Extraction de Tableaux depuis les Pages Web** : Capture et extraction de tableaux présents directement sur une page web pour faciliter la récupération de données structurées.
-  
-- **Prétraitement d'Image** : Prétraitement d'image pour assurer une meilleure lisibilité des données capturées.
+- **Extraction de Tableaux** : 
+    - Capture directe depuis les pages web via html2canvas
+    - Support des tableaux en format image
+    - Upload manuel d'images de tableaux 
+- **Traitement d'image** : 
+    - Détection de tableaux dans les images
+    - Extraction des données tabulaires
+- **Modification des Données** : 
+    - Modification directe des cellules
+    - Suppression de lignes et colonnes
+    - Fusion de cellules horizontale
+    - Interface d'édition en mode popup et plein écran
 
-- **Modification des Données** : Interface permettant de modifier les données extraites (suppression ou modification de lignes/colonnes) avant l'exportation.
-
-- **Exportation Flexible** : Exportation des données extraites dans différents formats comme CSV et JSON, selon les besoins de l'utilisateur.
+- **Exportat Flexible** :
+    - Format CSV avec support des cellules fusionnées
+    - Format JSON structuré
+    - Prévisualisation des exports en temps réel
 
 - **Interface Conviviale** : Une interface facile à utiliser, permettant une gestion simple et efficace des tableaux extraits.
 
 ## 🌐 Infrastructure
-
-<!-- TODO -->
-
-# 📘 Documentation
-
-<!-- TODO -->
-
-# 🗂️ Organisation
-
-Les dossiers du répertoire sont organisés comme suit:
-
-<!-- TODO -->
+**Frontend**: Extension Chrome (HTML, CSS, JavaScript)
+**Backend**: Python avec FastAP, PyTesseract, OpenCV
 
 # 💻 Installation
-
-<!-- TODO -->
+**Backend**:
+```bash
+# Installer les dépendances
+pip install -r requirements.txt
+cd src/backend/api
+# Lancer le serveur
+uvicorn main:app --reload
+```
+**Extension Chrome**:
+1. Ouvrir Chrome et accéder à `chrome://extensions/`
+2. Activer le mode développeur
+3. Cliquer sur "Charger l'extension non empaquetée" et sélectionner le dossier `src/extension`

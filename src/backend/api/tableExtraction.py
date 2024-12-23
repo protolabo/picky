@@ -41,9 +41,6 @@ def image_to_2d_array(image):
     # Convertir l'image en niveaux de gris
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    # Appliquer un flou gaussien pour réduire le bruit
-    #blurred = cv2.GaussianBlur(gray, (5, 5), 0)
-
     # Appliquer un seuillage adaptatif
     thresh = cv2.adaptiveThreshold(gray, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV, 11, 2)
 
@@ -88,7 +85,7 @@ def image_to_2d_array(image):
     current_row = []
     last_y = cells[0][1]
     for cell in cells:
-        if cell[1] > last_y + seuil_nv_ligne: # on passe à nouvelle ligne si la différence en y est significative (maintenant 20 est universel car on resize les images pourqu'elles soient de presque même taille)
+        if cell[1] > last_y + seuil_nv_ligne:
             rows.append(current_row)
             current_row = []
         current_row.append(cell)
@@ -99,7 +96,7 @@ def image_to_2d_array(image):
     for row in rows:
         row.sort(key=lambda c: c[0])
 
-    # Extraire le texte de chaque cellule et dessiner les rectangles
+    # Extraire le texte de chaque cellule 
     table_data = []
     for row_index, row in enumerate(rows):
         row_data = []

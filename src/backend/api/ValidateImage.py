@@ -19,13 +19,13 @@ def validate_table_image(image, min_table_area_ratio = 0.5):
     if len(contours) == 0 or hierarchy is None:
         return {
             "valid": False,
-            "commentaire": """
-                Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
+            "commentaire": 
+            """Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
                   - L'image est nette et bien éclairée
                   - L'image contient un tableau
                   - Le tableau est centré dans l'image
 
-                Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
+            Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
 
@@ -51,25 +51,25 @@ def validate_table_image(image, min_table_area_ratio = 0.5):
     if nb_table_candidates == 0:
         return {
             "valid": False,
-            "commentaire": """
-                Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
+            "commentaire": 
+            """Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
                   - L'image est nette et bien éclairée
                   - L'image contient un tableau
                   - Le tableau est centré dans l'image
 
-                Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
+            Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
     # L'image contient plusieurs tableaux
     elif nb_table_candidates > 1:
         return {
             "valid": False,
-            "commentaire": """
-                Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
+            "commentaire": 
+            """Impossible de détecter un tableau dans l'image. Veuillez vous assurer que :
                   - L'image est nette et bien éclairée
                   - L'image contient un seul tableau
                   
-                Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
+            Vous pouvez réessayer en fournissant une nouvelle image ou capture d'écran répondant à ces critères.
             """
             }
     # Un seul tableau valide
