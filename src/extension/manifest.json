@@ -1,0 +1,33 @@
+{
+  "manifest_version": 3,
+  "name": "Picky",
+  "version": "1.0",
+  "description": "Extract table data from images",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "notifications",
+    "tabs"
+  ],
+  "background": {
+    "service_worker": "popup/background.js"
+  },
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": "icons/icon.png"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "popup/capture.js",
+        "libs/*"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
