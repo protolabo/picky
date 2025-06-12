@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import numpy as np
 import cv2
 from ValidateImage import validate_table_image
-from TableExtraction import image_to_2d_array
+from tableExtraction import image_to_2d_array
 
 app = FastAPI()
 
