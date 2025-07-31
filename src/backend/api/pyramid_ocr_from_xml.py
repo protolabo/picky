@@ -315,43 +315,6 @@ def expand_annotated_table_to_grid(annotated_rows):
 
         return table_grid  
 
-def insert_missing_cells_from_overlap(rows, tolerance=5):
-        """
-        Pour chaque ligne avec moins de colonnes que la ligne la plus complète,
-        vérifie les cellules verticalement superposées dans les autres lignes,
-        et ajoute des '' là où une cellule fusionnée manque.
-        """
-        max_cols = max(len(row) for row in rows)
-        aligned = []
-
-        # Obtenir les colonnes "x-spans" de la ligne la plus complète
-        ref_row = max(rows, key=lambda r: len(r))
-        col_spans = [(x, x + w) for (x, y, w, h) in ref_row]
-
-        for row in rows:
-            new_row = []
-            used = [False] * len(row)
-
-            # index de cellule en cours
-            cell_idx = 0
-            for col_start, col_end in col_spans:
-                # Chercher une cellule existante qui chevauche cette colonne
-                found = False
-                for j, (x, y, w, h) in enumerate(row):
-                    if used[j]:
-                        continue
-                    cx1, cx2 = x, x + w
-                    if cx1 - tolerance <= col_start <= cx2 + tolerance or cx1 - tolerance <= col_end <= cx2 + tolerance:
-                        new_row.append((x, y, w, h))
-                        used[j] = True
-                        found = True
-                        break
-                if not found:
-                    new_row.append('')  # rien ne recouvre cet espace → cellule fusionnée absente
-
-            aligned.append(new_row)
-
-        return aligned
 
 def remove_overlapping_cells(cells, iou_threshold=0.3):
         """
@@ -455,7 +418,7 @@ def corrected_draw_cells_on_image(image, cells, output_path="cells_visualisation
             cv2.rectangle(image_copy, (x, y), (x + w, y + h), (0, 0, 255), 2)  # rouge
         cv2.imwrite(output_path, image_copy)
 
-def insert_missing_cells_from_overlap(rows, tolerance=5):
+def insert_missing_cells_from_overlap(rows, tolerance=20):
         """
         Pour chaque ligne avec moins de colonnes que la ligne la plus complète,
         vérifie les cellules verticalement superposées dans les autres lignes,

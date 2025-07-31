@@ -1,4 +1,4 @@
-name: test
+name: pyramidtabnet
 
 channels:
 
@@ -284,5 +284,5 @@ dependencies:
 
       - zipp==3.23.0
 
-prefix: C:\Users\malil\miniconda3\envs\test 
+prefix: C:\Users\malil\miniconda3\envs\pyramidtabnet 
 
