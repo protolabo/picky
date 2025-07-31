@@ -33,17 +33,27 @@ Picky est une extension de navigateur conçue pour extraire et manipuler des don
 **Backend**: Python avec FastAPI, PyTesseract, OpenCV
 
 # 💻 Installation
-
+intaller Miniconda 23.5.2 
+          -Intalations directe Windows :https://repo.anaconda.com/miniconda/Miniconda3-py39_23.5.2-0-Windows-x86_64.exe
+          -Plus d'informattions pour macOS et Linux https://www.anaconda.com/docs/getting-started/miniconda/install#to-download-an-older-version
 ## Backend
 
 ```bash
-# Installer les dépendances
-pip install -r requirements.txt
-cd src/backend/api
-# Lancer le serveur
-uvicorn main:app --reload
-```
+# Set up environement 
+conda env create -f environment_core.yml
+conda activate pyramidtabnet
+pip install -r post_install_pip.txt
+pip uninstall mmcv mmcv-full -y
+pip install mmcv-full==1.6.0 -f https://download.openmmlab.com/mmcv/dist/cu113/torch1.11/index.html
 
+
+
+
+# Lancer le serveur
+cd src/backend/api
+python -m uvicorn main:app --reload
+
+```
 ## Extension Chrome
 
 1. Ouvrir Chrome et accéder à `chrome://extensions/`
@@ -57,3 +67,4 @@ Si vous êtes intéressé à participer au projet, veuillez prendre contact avec
 ## Contributeurs
 
 - Mehdi Lagnaoui [@MehdiLagnaoui](https://github.com/MehdiLagnaoui)
+- Ismail Simo 
