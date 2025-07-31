@@ -36,6 +36,8 @@ Picky est une extension de navigateur conçue pour extraire et manipuler des don
 - **intaller Miniconda 23.5.2** :
   - Intalations directe Windows :https://repo.anaconda.com/miniconda/Miniconda3-py39_23.5.2-0-Windows-x86_64.exe
   - Plus d'informattions pour macOS et Linux https://www.anaconda.com/docs/getting-started/miniconda/install#to-download-an-older-version
+- **instaler le fichier weigths** :
+  - telecharger le fichier le placer dans src/backend/pyramidtabnet :https://drive.google.com/drive/folders/1-3GvPcTpwnEqGLGNYWmf5YnaGoznmfGr
 ## Backend
 
 ```bash
