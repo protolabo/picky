@@ -33,9 +33,9 @@ Picky est une extension de navigateur conçue pour extraire et manipuler des don
 **Backend**: Python avec FastAPI, PyTesseract, OpenCV
 
 # 💻 Installation
-intaller Miniconda 23.5.2 
-          -Intalations directe Windows :https://repo.anaconda.com/miniconda/Miniconda3-py39_23.5.2-0-Windows-x86_64.exe
-          -Plus d'informattions pour macOS et Linux https://www.anaconda.com/docs/getting-started/miniconda/install#to-download-an-older-version
+**intaller Miniconda 23.5.2 **
+-Intalations directe Windows :https://repo.anaconda.com/miniconda/Miniconda3-py39_23.5.2-0-Windows-x86_64.exe
+-Plus d'informattions pour macOS et Linux https://www.anaconda.com/docs/getting-started/miniconda/install#to-download-an-older-version
 ## Backend
 
 ```bash
