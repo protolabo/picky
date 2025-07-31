@@ -1,8 +1,13 @@
 <!DOCTYPE html>
-<meta charset="UTF-8">
-<html>
+<html lang="fr">
 <head>
+  <meta charset="UTF-8">
   <title>Picky</title>
+
+  <!-- Handsontable CSS LOCAL -->
+  <link rel="stylesheet" href="libs/handsontable.min.css">
+
+  <!-- Ton CSS -->
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
@@ -16,25 +21,52 @@
       </div>
     </div>
     
-    <div id="loading" class="loading hidden">
-      Traitement en cours...
+    <div id="canvas-wrapper" class="hidden">
+      <div class="edit-buttons " >
+        <button id="addZoneBtn" class="export-btn"> Ajouter une zone</button>
+        <button id="saveZonesBtn" class="export-btn"> Valider les zones</button>
+      </div>
+      <p></p>
+
+      <canvas id="zone-canvas">_</canvas>
+
+      <div class="edit-buttons " id="edit-buttons">
+        <button id="new-add-row" class="export-btn">➕ Ligne</button>
+        <button id="new-add-col" class="export-btn">➕ Colonne</button>
+        <button id="remove-row" class="export-btn">Supprimer une ligne</button>
+        <button id="remove-col" class="export-btn">Supprimer une colonne</button>
+        <button id="reset-table" class="export-btn">Réinitialiser le tableau</button>
+        
+      </div>
+
     </div>
 
-    <div id="error" class="error hidden">
-    </div>
-
+    <div id="loading" class="loading hidden">Traitement en cours...</div>
+    <div id="error" class="error hidden"></div>
+    
     <div id="open-window-div" class="open-window hidden">
       <button id="open-window" class="window-btn">Ouvrir le tableau en plein écran</button>
     </div>
 
+    
     <div id="result" class="result hidden">
+      
       <div class="table-container"></div>
+
       <div id="export-buttons" class="export-buttons hidden">
         <button class="export-btn" id="export-csv">Exporter en CSV</button>
         <button class="export-btn" id="export-json">Exporter en JSON</button>
-    </div>
+      </div>
+
+      
     </div>
   </div>
-<script src="popup.js"></script>
+
+  <!-- Handsontable JS LOCAL -->
+  <script src="libs/handsontable.min.js"></script>
+
+  <!-- Ton JS -->
+  <script src="popup.js"></script>
+  <script src="zone_editor.js"></script>
 </body>
 </html>

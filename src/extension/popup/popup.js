@@ -1,828 +1,696 @@
-let tableData = null;
-let isWindowMode = false;
-let selectedCells = [];
-let isSelecting = false;
-let contextMenu = null;
-let loadingDiv, errorDiv, resultDiv, openWindowBtn;
+let hotInstance = null;
+let tableHistory = [];
+let originalTableData = null;
+console.log("✅ popup_fixed.js bien chargé !");
 
-document.addEventListener('DOMContentLoaded', async function() {
-    // Vérifier si nous sommes dans la fenêtre ou le popup
-    const urlParams = new URLSearchParams(window.location.search);
-    isWindowMode = urlParams.get('mode') === 'window';
+document.addEventListener("DOMContentLoaded", () => {
+const saved = localStorage.getItem("handsontableData");
+  const fileInput = document.getElementById("file-input");
+  const uploadBtn = document.getElementById("upload-btn");
+  const tableContainer = document.querySelector(".table-container");
+  const loading = document.getElementById("loading");
+  const error = document.getElementById("error");
+  const result = document.getElementById("result");
+  const canvas = document.getElementById("zone-canvas");
 
-    if (isWindowMode) {
-        // Mode fenêtre
-        const storedData = await chrome.storage.local.get(['tableData']);
-        if (storedData.tableData) {
-            tableData = storedData.tableData;
-            showResults(tableData);
-            setupExportButtons();
-            setupPreviewTabs();
-        }
-    } else {
-        // Mode popup 
-        setupPopupInterface();
-        setupExportButtons();
+  uploadBtn.addEventListener("click", () => fileInput.click());
+ if (window.location.search.includes("mode=window") && saved) {
+  const parsed = JSON.parse(saved);
+  displayTableWithState(parsed.tableData, parsed.headers);
+  
+  // Montre le canvas avec l'image en plein écran
+  document.getElementById("drop-zone").classList.add("hidden");
+  document.getElementById("canvas-wrapper").classList.remove("hidden");
+  document.getElementById("export-buttons").classList.remove("hidden");
+  
+  // Recharge l'image d'origine
+  const imgPath = localStorage.getItem("currentImagePath");
+  if (imgPath) {
+    initializeZoneEditor(imgPath);
+  }
 
-        // Vérifier s'il y a une image capturée à traiter
-        const { capturedImage } = await chrome.storage.local.get(['capturedImage']);
-        if (capturedImage) {
-            processImage(capturedImage);
-        }
+  attachButtonListeners();
+  attachExportListeners();
+  return;
+}
+  fileInput.addEventListener("change", async (e) => {
+    const file = e.target.files[0];
+    
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      showError("Le fichier doit être une image.");
+      return;
     }
+
+    showLoading();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await fetch("http://localhost:8000/extract-table", {
+        method: "POST",
+        body: formData,
 });
 
-function setupPopupInterface() {
-  // Assignation aux variables globales
-  loadingDiv = document.getElementById('loading');
-  errorDiv = document.getElementById('error');
-  resultDiv = document.getElementById('result');
-  openWindowBtn = document.getElementById('open-window-div');
 
-  const dropZone = document.getElementById('drop-zone');
-  const fileInput = document.getElementById('file-input');
-  const uploadBtn = document.getElementById('upload-btn');
-  const captureBtn = document.getElementById('capture-btn');
+      const resultData = await response.json();
+      console.log("Réponse du backend :", resultData);
+      if (!resultData.success) {
+        showError(resultData.message);
+        return;
+      }
 
-  // Gestion du drag & drop
-  dropZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    dropZone.classList.add('dragover');
-  });
+      const tableData = resultData.data;
+      currentImagePath = URL.createObjectURL(file);
 
-  dropZone.addEventListener('dragleave', () => {
-    dropZone.classList.remove('dragover');
-  });
-
-  dropZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    dropZone.classList.remove('dragover');
-    const file = e.dataTransfer.files[0];
-    if (file) {
-      processImage(file);
+      console.log("Contenu de tableData :", tableData);
+      document.getElementById("result").classList.remove("hidden");
+      displayTable(tableData);
+      console.log("Affichage tableau avec Handsontable...");
+      document.getElementById("drop-zone").classList.add("hidden");
+      document.getElementById("canvas-wrapper").classList.remove("hidden");
+      initializeZoneEditor(currentImagePath);
+    } catch (err) {
+      showError("Erreur lors du traitement : " + err.message);
+    } finally {
+      hideLoading();
     }
-  });
-
-  // Gestion du bouton upload
-  uploadBtn.addEventListener('click', () => {
-    fileInput.click();
-  });
-
-  fileInput.addEventListener('change', (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      processImage(file);
+    document.getElementById("open-window").addEventListener("click", () => {
+      
+      if (hotInstance) {
+      const dataToSave = {
+        tableData: hotInstance.getData(),
+        headers: hotInstance.getSettings().nestedHeaders || null
+      };
+      localStorage.setItem("originalTableData", JSON.stringify(hotInstance.getData()));
+      localStorage.setItem("currentImagePath", currentImagePath);
+      localStorage.setItem("handsontableData", JSON.stringify(dataToSave));
     }
-  });
 
-  // Gestion du bouton capturer
-  captureBtn.addEventListener('click', async () => {
-    try {
-        // Obtenir l'onglet actif
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-        
-        // Injecter html2canvas
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['libs/html2canvas.min.js']
-        });
-
-        // Injecter le script de capture
-        await chrome.scripting.executeScript({
-            target: { tabId: tab.id },
-            files: ['popup/capture.js']
-        });
-
-        // Fermer le popup
-        window.close();
-
-    } catch (error) {
-        console.error('Erreur lors de l\'injection du script :', error);
-    }
-  });
-
-  // Gestion du bouton ouvrir dans une nouvelle fenêtre  
-  openWindowBtn.addEventListener('click', async () => {
-    // Sauvegarder les données actuelles
-    await chrome.storage.local.set({ tableData: tableData });
-    
-    // Créer la nouvelle fenêtre
     chrome.windows.create({
-        url: chrome.runtime.getURL('popup/table-window.html?mode=window'),
-        type: 'popup',
-        width: 800,
-        height: 600
+      url: chrome.runtime.getURL("popup/popup.html?mode=window"),
+      type: "popup",
+      width: 1400,
+      height: 900
+      
     });
-
-    // Griser l'interface du popup
-    document.querySelector('.container').classList.add('disabled');
   });
+
+  if (window.location.search.includes("mode=window")) {
+    document.body.setAttribute("data-mode", "window");
+  }
+
+  });
+
+
+
+// Délégation d'événement : gérer le clic sur un bouton de suppression
+
+
+});
+//fin du dom
+
+
+// Appliquer les styles si on est en mode fenêtre
+if (window.location.search.includes("mode=window")) {
+  document.body.setAttribute("data-mode", "window");
+  document.getElementById("open-window")?.classList.add("hidden");
+}
+
+ //=============================== Fonction ==================================
+
+ function buildTableTreeFromColumn(data) {
+  const rowCount = data.length;
+  const colCount = data[0].length;
+
+  const hierarchy = {};       // { id: { label, parent, children } }
+  const labelToId = {};       // map to keep track of nodes by label
+  let lastParent = null;
+  let nodeId = 0;
+
+  function createNode(label) {
+    if (label in labelToId) return labelToId[label];
+    const id = `n${nodeId++}`;
+    hierarchy[id] = { label, parent: null, children: [] };
+    labelToId[label] = id;
+    return id;
+  }
+
+  for (let row = rowCount - 1; row >= 0; row--) {
+    const label = data[row][0];
+
+    // On saute les lignes vides
+    if (!label) continue;
+
+    const nodeIdCurrent = createNode(label);
+
+    // Cas du bas du tableau = racine (pas de ligne en dessous)
+    if (row === rowCount - 1) {
+      hierarchy[nodeIdCurrent].parent = null;
+      continue;
+    }
+
+    const belowLabel = data[row + 1][0];
+
+    // Si la cellule du dessous est non vide : c’est un parent
+    if (belowLabel && belowLabel !== label) {
+      const parentId = createNode(belowLabel);
+      hierarchy[nodeIdCurrent].parent = parentId;
+      hierarchy[parentId].children.push(nodeIdCurrent);
+      lastParent = parentId;
+    } else {
+      // Pas de parent immédiat : chercher sur la ligne des parents possibles
+      let siblingParentId = null;
+      for (let col = 1; col < colCount; col++) {
+        const candidate = data[row][col];
+        if (candidate && candidate in labelToId) {
+          siblingParentId = hierarchy[labelToId[candidate]].parent;
+          break;
+        }
+      }
+
+      if (siblingParentId) {
+        hierarchy[nodeIdCurrent].parent = siblingParentId;
+        hierarchy[siblingParentId].children.push(nodeIdCurrent);
+      } else if (lastParent) {
+        hierarchy[nodeIdCurrent].parent = lastParent;
+        hierarchy[lastParent].children.push(nodeIdCurrent);
+      }
+    }
+  }
+
+  return hierarchy;
+}
+
+function attachButtonListeners() {
+  document.getElementById("new-add-row")?.addEventListener("click", () => {
+    const currentData = hotInstance.getData();
+    const emptyRow = new Array(hotInstance.countCols()).fill("");
+    hotInstance.loadData([...currentData, emptyRow]);
+  });
+}
+
+function attachExportListeners() {
+  // Bouton Export CSV
+  document.getElementById("export-csv")?.addEventListener("click", () => {
+    if (!hotInstance) return;
+
+    const data = hotInstance.getData();
+    const csvContent = data.map(row =>
+      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", "tableau.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // Bouton Export JSON
+  document.getElementById("export-json")?.addEventListener("click", () => {
+  if (!hotInstance) {
+    alert("Aucun tableau à exporter");
+    return;
+  }
+
+  const data = hotInstance.getData();
+  const rowCount = hotInstance.countRows();
+  const colCount = hotInstance.countCols();
+
+  const topHeaders = data[0]; // Ligne 0
+
+  const columnGroups = []; // Contient : { parentLabel, colIndex, childStartRow }
+
+  let currentParent = null;
+
+  // Étape 1 : déterminer le parent de chaque colonne
+  for (let col = 0; col < colCount; col++) {
+    const cell = topHeaders[col];
+
+    if (cell && cell.trim() !== "") {
+      currentParent = cell.trim();
+    }
+
+    columnGroups.push({
+      parent: currentParent,
+      col: col
+    });
+  }
+
+  // Étape 2 : Regrouper les colonnes par parent
+  const groupedByParent = {};
+  for (const group of columnGroups) {
+    if (!groupedByParent[group.parent]) {
+      groupedByParent[group.parent] = [];
+    }
+    groupedByParent[group.parent].push(group.col);
+  }
+
+  // Étape 3 : Construire l’arborescence
+  const result = [];
+
+  for (const parentLabel in groupedByParent) {
+    const columns = groupedByParent[parentLabel];
+
+    if (columns.length === 1) {
+      // Cas simple : un seul enfant = liste plate
+      const col = columns[0];
+      const children = [];
+
+      for (let row = 1; row < rowCount; row++) {
+        const value = data[row][col];
+        if (value && value !== "") {
+          children.push(value);
+        }
+      }
+
+      result.push({
+        label: parentLabel,
+        children: children.map(v => ({ label: v }))
+      });
+
+    } else {
+      // Cas complexe : plusieurs colonnes enfants
+      const parent = { label: parentLabel, children: [] };
+
+      for (const col of columns) {
+        const childLabel = data[1][col]; // ligne 1 = nom du sous-colonne
+        const children = [];
+
+        for (let row = 2; row < rowCount; row++) {
+          const val = data[row][col];
+          if (val && val !== "") {
+            children.push({ label: val });
+          }
+        }
+
+        parent.children.push({
+          label: childLabel,
+          children: children
+        });
+      }
+
+      result.push(parent);
+    }
+  }
+
+  // ✅ Affichage console
+  console.log("📦 JSON structuré :", result);
+
+  // 📁 Export JSON
+  const jsonStr = JSON.stringify(result, null, 2);
+  const blob = new Blob([jsonStr], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "table_arborescent.json";
+  a.click();
+});
+}
+
+  document.getElementById("new-add-col")?.addEventListener("click", () => {
+    const currentData = hotInstance.getData();
+    const updatedData = currentData.map(row => [...row, ""]);
+    hotInstance.loadData(updatedData);
+  });
+
+  document.getElementById("reset-table")?.addEventListener("click", () => {
+    displayTable(originalTableData);
+  });
+
+  // Répète pour les autres boutons si besoin
+  // Supprimer ligne
+document.getElementById("remove-row").addEventListener("click", () => {
+  showDeleteRowButtons();
+});
+
+document.getElementById("remove-col").addEventListener("click", () => {
+  showDeleteColButtons();
+});
+document.querySelector(".table-container").addEventListener("click", function (e) {
+  if (e.target.classList.contains("delete-row-btn")) {
+    const rowIndex = parseInt(e.target.dataset.row, 10);
+    if (!isNaN(rowIndex)) {
+      hotInstance.alter("remove_row", rowIndex);
+      showDeleteRowButtons(); // Recalculer les boutons après suppression
+    }
+  }
+});
+
+document.querySelector(".table-container").addEventListener("click", function (e) {
+  if (e.target.classList.contains("delete-col-btn")) {
+    const colIndex = parseInt(e.target.dataset.col, 10);
+    if (!isNaN(colIndex)) {
+      hotInstance.alter("remove_col", colIndex);
+      showDeleteColButtons(); // Recalculer les boutons après suppression
+    }
+  }
+});
+
+
+
+function displayTable(data) {
+  attachButtonListeners();
+  attachExportListeners();
+  const container = document.querySelector(".table-container");
+  container.innerHTML = "";
+  
+  originalTableData = JSON.parse(JSON.stringify(data));
+  document.getElementById("open-window-div").classList.remove("hidden");
+
+  const colHeaders = data[0];          // ligne des en-têtes
+  const tableBody = data.slice(1);     // reste = données
+
+  hotInstance = new Handsontable(container, {
+    data: data,
+    colHeaders: true,                 // on utilise nestedHeaders
+        // ligne d'en-tête personnalisée
+    rowHeaders: true,
+    manualRowMove: true,
+    manualColumnMove: true,
+    manualRowResize: true,
+    manualColumnResize: true,
+    contextMenu: true,
+    stretchH: 'all',
+    height: 'auto',
+    outsideClickDeselects: false,
+    selectionMode: 'multiple',
+    mergeCells: true,
+    readOnly: false,
+    licenseKey: 'non-commercial-and-evaluation',
+
+    // Permet de détecter la sélection d'en-têtes (ligne -1)
+    afterOnCellMouseDown: (event, coords) => {
+      if (coords.row === -1) {
+        console.log("En-têtes sélectionnés :", hotInstance.getSelected());
+      }
+    }
+  });
+}
+
+function displayTableWithState(data, nestedHeaders) {
+  const container = document.querySelector(".table-container");
+  container.innerHTML = "";
+
+  originalTableData = JSON.parse(JSON.stringify(data)); // 🟢 essentiel
+
+  hotInstance = new Handsontable(container, {
+    data,
+    colHeaders: !nestedHeaders,
+    nestedHeaders: nestedHeaders || undefined,
+    rowHeaders: true,
+    manualRowMove: true,
+    manualColumnMove: true,
+    manualRowResize: true,
+    manualColumnResize: true,
+    contextMenu: true,
+    stretchH: 'all',
+    height: 'auto',
+    outsideClickDeselects: false,
+    selectionMode: 'multiple',
+    mergeCells: true,
+    readOnly: false,
+    licenseKey: 'non-commercial-and-evaluation'
+  });
+
+  document.getElementById("result").classList.remove("hidden");
+  document.getElementById("open-window-div").classList.remove("hidden");
+}
+function showDeleteRowButtons() {
+  const rows = hotInstance.countRows();
+  const tableContainer = document.querySelector(".table-container");
+  removeDeleteButtons();
+
+ console.log("Création des boutons de suppression...");
+
+setTimeout(() => {
+  for (let i = 0; i < rows; i++) {
+    const cell = hotInstance.getCell(i, 0); // première cellule de la ligne
+    if (!cell) {
+      console.warn(`Cellule ${i},0 non trouvée`);
+      continue;
+    }
+
+    const rect = cell.getBoundingClientRect();
+    const tableRect = tableContainer.getBoundingClientRect();
+
+    const top = rect.top - tableRect.top;
+    const left = -30;
+
+    console.log(`Bouton ligne ${i} ➜ top: ${top}px, left: ${left}px`);
+
+    const btn = document.createElement("button");
+    btn.textContent = "❌";
+    btn.classList.add("delete-row-btn");
+    btn.style.position = "absolute";
+    btn.style.top = `${top}px`;
+    btn.style.left = `$0px`;
+    btn.dataset.row = i;
+
+    tableContainer.appendChild(btn);
+  }
+
+  console.log("Nombre total de boutons :", document.querySelectorAll('.delete-row-btn').length);
+}, 100); // délai pour s'assurer que le rendu est terminé
 }
 
 function showLoading() {
-  loadingDiv.classList.remove('hidden');
-  errorDiv.classList.add('hidden');
-  resultDiv.classList.add('hidden');
-  openWindowBtn.classList.add('hidden');
-}
+    loading.classList.remove("hidden");
+    error.classList.add("hidden");
+    result.classList.add("hidden");
+  }
 
 function hideLoading() {
-  loadingDiv.classList.add('hidden');
+    loading.classList.add("hidden");
+  }
+
+function showError(msg) {
+    error.textContent = msg;
+    error.classList.remove("hidden");
+  }
+
+function showDeleteColButtons() {
+  const cols = hotInstance.countCols();
+  const tableContainer = document.querySelector(".table-container");
+  removeDeleteButtons();
+
+  console.log("Création des boutons de suppression de colonne...");
+
+  setTimeout(() => {
+    for (let j = 0; j < cols; j++) {
+      const cell = hotInstance.getCell(0, j); // première cellule de la colonne
+      if (!cell) {
+        console.warn(`Cellule 0,${j} non trouvée`);
+        continue;
+      }
+
+      const rect = cell.getBoundingClientRect();
+      const tableRect = tableContainer.getBoundingClientRect();
+
+      const left = rect.left - tableRect.left;
+      const top = -25;
+
+      console.log(`Bouton colonne ${j} ➜ top: ${top}px, left: ${left}px`);
+
+      const btn = document.createElement("button");
+      btn.textContent = "❌";
+      btn.classList.add("delete-col-btn");
+      btn.style.position = "absolute";
+      btn.style.top = `0px`;
+      btn.style.left = `${left}px`;
+      btn.dataset.col = j;
+
+      tableContainer.appendChild(btn);
+    }
+
+    console.log("Nombre total de boutons colonnes :", document.querySelectorAll('.delete-col-btn').length);
+  }, 100);
 }
 
-function showError(message) {
-  errorDiv.textContent = message;
-  errorDiv.classList.remove('hidden');
-  resultDiv.classList.add('hidden');
-  openWindowBtn.classList.add('hidden');
+function removeDeleteButtons() {
+  document.querySelectorAll(".delete-row-btn").forEach(btn => btn.remove());
 }
 
-async function processImage(input) {
-  showLoading();
-  
-  try {
-    let formData;
-    let options;
-    
-    if (input instanceof File) {
-      // Cas d'un fichier uploaded
-      if (!input.type.startsWith('image/')) {
-        showError('Le fichier doit être une image.');
+function removeDeleteButtons() {
+  document.querySelectorAll(".delete-row-btn, .delete-col-btn").forEach(btn => btn.remove());
+}
+
+async function loadZonesFromXML() {
+  const response = await fetch("http://localhost:8000/static/table_structure.xml");
+  const xmlText = await response.text();
+  const parser = new DOMParser();
+  const xml = parser.parseFromString(xmlText, "application/xml");
+
+  const zoneElements = xml.getElementsByTagName("Coords");
+  const zones = [];
+
+  for (const coordNode of zoneElements) {
+    const points = coordNode.getAttribute("points"); // format: "x1,y1 x2,y2 x3,y3 x4,y4"
+    if (!points) continue;
+
+    const coords = points.split(" ").map(pt => pt.split(",").map(Number));
+    const xs = coords.map(p => p[0]);
+    const ys = coords.map(p => p[1]);
+    const x = Math.min(...xs);
+    const y = Math.min(...ys);
+    const w = Math.max(...xs) - x;
+    const h = Math.max(...ys) - y;
+
+    zones.push({ x, y, w, h });
+  }
+
+  return zones;
+}
+
+async function initializeZoneEditor(imageSrc) {
+  let realImageSize = { width: 0, height: 0 }; // 🟡 dimensions de l'image originale
+
+  const canvas = document.getElementById("zone-canvas");
+  if (!canvas) {
+    console.log("❌ Canvas #zone-canvas introuvable dans le DOM.");
+    return;
+  }
+  const ctx = canvas.getContext("2d");
+
+  const zones = await loadZonesFromXML();
+  window.zones = zones;
+  let selectedZone = null;
+  let isDragging = false;
+  let isResizing = false;
+  let dragOffsetX = 0;
+  let dragOffsetY = 0;
+
+  const image = new Image();
+  window.zoneEditorImage = image;
+  image.onload = () => {
+    canvas.width = image.width;
+    canvas.height = image.height;
+
+    realImageSize.width = image.naturalWidth;
+    realImageSize.height = image.naturalHeight;
+
+    draw();
+  };
+  image.src = imageSrc;
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(image, 0, 0);
+
+    for (const zone of zones) {
+      ctx.strokeStyle = "red";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(zone.x, zone.y, zone.w, zone.h);
+      ctx.fillStyle = "red";
+      ctx.fillRect(zone.x + zone.w - 8, zone.y + zone.h - 8, 8, 8);
+    }
+  }
+
+  canvas.onmousedown = (e) => {
+    const { offsetX, offsetY } = e;
+
+    for (const zone of zones) {
+      if (
+        offsetX > zone.x + zone.w - 10 && offsetX < zone.x + zone.w &&
+        offsetY > zone.y + zone.h - 10 && offsetY < zone.y + zone.h
+      ) {
+        selectedZone = zone;
+        isResizing = true;
         return;
       }
-      formData = new FormData();
-      formData.append('file', input);
-      options = {
-        method: 'POST',
-        body: formData
-      };
-    } else {
-      // Cas d'une image base64 (capture)
-      const imageBlob = await base64ToBlob(input);
-      const imageFile = new File([imageBlob], 'screenshot.png', { type: 'image/png' });
-      formData = new FormData();
-      formData.append('file', imageFile);
-      options = {
-        method: 'POST',
-        body: formData
-      };
-      // Nettoyer le storage 
-      chrome.storage.local.remove(['capturedImage']);
-    }
 
-    const response = await fetch('http://localhost:8000/extract-table', options);
-    const result = await response.json();
-
-    if (!result.success) {
-      showError(result.message);
-      return;
-    }
-
-    tableData = result.data;
-    showResults(result.data);
-    setupExportButtons();
-  } catch (error) {
-    showError('Erreur lors du traitement de l\'image: ' + error.message);
-  } finally {
-    hideLoading();
-  }
-}
-
-function base64ToBlob(base64String) {
-  // Remove data URL prefix if present
-  const base64Data = base64String.replace(/^data:image\/\w+;base64,/, '');
-  
-  // Convert base64 to binary
-  const binaryString = atob(base64Data);
-  const length = binaryString.length;
-  const bytes = new Uint8Array(length);
-  
-  for (let i = 0; i < length; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  
-  return new Blob([bytes], { type: 'image/png' });
-}
-
-function showResults(data) {
-  console.log(data);
-  // Création du tableau HTML
-  const tableContainer = document.querySelector('.table-container');
-  const table = document.createElement('table');
-  
-  // Créer le corps 
-  const tbody = document.createElement('tbody');
-  
-  // Ajouter chaque ligne de données
-  data.forEach((row, rowIndex) => {
-    const tr = document.createElement('tr');
-    for(let cellIndex = 0; cellIndex < row.length; cellIndex++) {
-        // Si c'est une cellule fusionnée ('_'), on la saute
-        if (row[cellIndex] === '_') continue;
-        
-        const td = createEditableCell(row[cellIndex], rowIndex, cellIndex);
-        tr.appendChild(td);
-    }
-    tbody.appendChild(tr);
-  });
-  
-  table.appendChild(tbody);
-  tableContainer.innerHTML = '';
-  tableContainer.appendChild(table);
-
-  if (!isWindowMode) {
-    const resultDiv = document.getElementById('result');
-    const openWindowBtn = document.getElementById('open-window-div');
-    const errorDiv = document.getElementById('error');
-    const exportButtons = document.getElementById('export-buttons');
-    resultDiv.classList.remove('hidden');
-    openWindowBtn.classList.remove('hidden'); 
-    errorDiv.classList.add('hidden');
-    exportButtons.classList.remove('hidden');
-  } else {
-    updatePreview();
-  }
-
-  setupEditableTable();
-  setupDeleteButtons(table);
-  setupCellSelection(table);
-}
-
-function setupEditableTable() {
-  const table = document.querySelector('.table-container table');
-  
-  table.addEventListener('dblclick', (e) => {
-    const cell = e.target.closest('.editable-cell');
-    if (!cell || cell.classList.contains('selected')) return; // Ne pas permettre l'édition si la cellule est sélectionnée
-
-    clearSelection(); // Nettoyer toute sélection existante avant d'éditer
-    startEditing(cell);
-  });
-
-  // Quand on clique sur entrer ou sur un autre élément
-  table.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      const editor = e.target.closest('.cell-editor');
-      if (editor) {
-        e.preventDefault();
-        finishEditing(editor);
+      if (
+        offsetX > zone.x && offsetX < zone.x + zone.w &&
+        offsetY > zone.y && offsetY < zone.y + zone.h
+      ) {
+        selectedZone = zone;
+        isDragging = true;
+        dragOffsetX = offsetX - zone.x;
+        dragOffsetY = offsetY - zone.y;
+        return;
       }
     }
-  });
-
-  // Quand on clique en dehors de la cellule
-  table.addEventListener('focusout', (e) => {
-    if (e.target.classList.contains('cell-editor')) {
-      finishEditing(e.target);
-    }
-  });
-}
-
-function createEditableCell(content, rowIndex, cellIndex) {
-  const td = document.createElement('td');
-  const div = document.createElement('div');
-  div.className = 'editable-cell';
-  div.dataset.row = rowIndex;
-  div.dataset.cell = cellIndex;
-  
-  let mergeCount = 0;
-  let nextIndex = cellIndex + 1;
-  
-  while (nextIndex < tableData[rowIndex].length && tableData[rowIndex][nextIndex] === '_') {
-    mergeCount++;
-    nextIndex++;
-  }
-  
-  if (mergeCount > 0) {
-    td.classList.add('merged-source');
-    if (nextIndex === tableData[rowIndex].length) {
-      td.classList.add('merge-end');
-    }
-    td.colSpan = mergeCount + 1;
-    div.dataset.colspan = mergeCount + 1;
-  }
-  
-  div.textContent = content;
-  td.appendChild(div);
-  return td;
-}
-
-function startEditing(cell) {
-  if (cell.querySelector('.cell-editor')) return;
-  
-  const content = cell.textContent;
-  const rowIndex = parseInt(cell.dataset.row);
-  const cellIndex = parseInt(cell.dataset.cell);
-  
-  const editor = document.createElement('textarea');
-  editor.className = 'cell-editor';
-  editor.value = content;
-  editor.dataset.row = rowIndex;
-  editor.dataset.cell = cellIndex;
-  
-  cell.textContent = '';
-  cell.classList.add('editing');
-  cell.appendChild(editor);
-  
-  editor.focus();
-  editor.select();
-}
-
-// synchroniser les modifications
-async function finishEditing(editor) {
-    const cell = editor.closest('.editable-cell');
-    const newContent = editor.value;
-    const rowIndex = parseInt(editor.dataset.row);
-    const cellIndex = parseInt(editor.dataset.cell);
-    
-    // Mettre à jour les données
-    tableData[rowIndex][cellIndex] = newContent;
-    
-    // Si nous sommes en mode fenêtre, mettre à jour le storage
-    if (isWindowMode) {
-        await chrome.storage.local.set({ tableData: tableData });
-        updatePreview();
-    }
-    
-    // Mettre à jour l'affichage
-    cell.classList.remove('editing');
-    cell.textContent = newContent;
-}
-
-// fermeture de la fenêtre
-if (isWindowMode) {
-    window.addEventListener('beforeunload', async () => {
-        // Nettoyer le storage quand la fenêtre est fermée
-        await chrome.storage.local.remove(['tableData']);
-    });
-};
-
-function convertToCSV(data) {
-  const rows = data.map(row => {
-    return row.map(cell => {
-      const stringValue = cell?.toString() || '';
-      // Remplacer les sauts de ligne par \n littéral
-      const withNewlines = stringValue.replace(/\n/g, '\\n').replace(/\r/g, '\\r');
-      // Échapper les guillemets
-      const escaped = withNewlines.replace(/"/g, '""');
-      
-      return `${escaped}`;
-    }).join(',');
-  });
-  return rows.join('\n');
-}
-
-function convertToJSON(data) {
-  return JSON.stringify(
-      data.map(row => 
-          row.filter(cell => cell !== '_')
-      ),
-      null, 
-      2
-  );
-}
-
-function downloadFile(content, filename, type) {
-  const blob = new Blob([content], { type: type });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
-}
-
-function setupExportButtons() {
-  const exportButtons = document.querySelectorAll('.export-btn');
-  
-  // Retirer les événements existants s'il y en a
-  exportButtons.forEach(button => {
-    button.replaceWith(button.cloneNode(true));
-  });
-  // Récupérer les nouveaux boutons après le clonage
-  const newExportButtons = document.querySelectorAll('.export-btn');
-
-  newExportButtons[0].addEventListener('click', () => {
-      if (!tableData) return;
-      const csv = convertToCSV(tableData);
-      const date = new Date().toISOString().split('T')[0];
-      downloadFile(csv, `table_${date}.csv`, 'text/csv');
-  });
-
-  newExportButtons[1].addEventListener('click', () => {
-      if (!tableData) return;
-      const json = convertToJSON(tableData);
-      const date = new Date().toISOString().split('T')[0];
-      downloadFile(json, `table_${date}.json`, 'application/json');
-  });
-}
-
-function setupDeleteButtons(table) {
-  const tbody = table.querySelector('tbody');
-  const rows = tbody.querySelectorAll('tr');
-
-  // Nettoyer les anciens boutons
-  document.querySelectorAll('.delete-button').forEach(btn => btn.remove());
-  
-  // Pour chaque colonne du tableau de données
-  tableData[0].forEach((_, colIndex) => {
-    const deleteBtn = createDeleteButton('column', colIndex);
-    table.parentElement.appendChild(deleteBtn);
-    
-    // Trouver la cellule visible pour cette colonne
-    const firstVisibleCell = findFirstVisibleCell(rows[0], colIndex);
-    if (firstVisibleCell) {
-      positionDeleteButton(deleteBtn, firstVisibleCell, 'column', colIndex);
-    }
-  });
-
-  // Boutons de suppression pour les lignes
-  rows.forEach((row, rowIndex) => {
-    const deleteBtn = createDeleteButton('row', rowIndex);
-    table.parentElement.appendChild(deleteBtn);
-    positionDeleteButton(deleteBtn, row.firstElementChild, 'row', rowIndex);
-  });
-
-  // Gestion de l'affichage des boutons au survol
-  table.addEventListener('mouseover', (e) => {
-    const cell = e.target.closest('td');
-    if (cell) {
-      const rowIndex = getRowIndex(cell);
-      const colIndices = getColumnIndices(cell);
-      showDeleteButtons(rowIndex, colIndices);
-    }
-  });
-
-  table.addEventListener('mouseout', (e) => {
-    if (!e.relatedTarget?.closest('.table-container')) {
-      hideAllDeleteButtons();
-    }
-  });
-}
-
-// Trouver la première cellule visible d'une colonne
-function findFirstVisibleCell(row, targetIndex) {
-  let dataIndex = 0;  // Index dans tableData
-  let visualIndex = 0;  // Index visuel
-  
-  for (const cell of row.cells) {
-    const colspan = parseInt(cell.colSpan) || 1;
-    // Si l'index cible est dans la plage de cette cellule
-    if (visualIndex <= targetIndex && targetIndex < visualIndex + colspan) {
-      // Retourner la cellule avec l'index réel des données
-      cell.dataset.realIndex = dataIndex;
-      return cell;
-    }
-    visualIndex += colspan;
-    dataIndex += colspan;  // Avancer l'index des données du nombre de cellules fusionnées
-  }
-  return null;
-}
-
-function createDeleteButton(type, index) {
-  const button = document.createElement('button');
-  button.className = `delete-button delete-${type}`;
-  button.textContent = '×';
-  button.dataset.type = type;
-  button.dataset.index = index;
-  
-  button.addEventListener('click', () => confirmDelete(type, index));
-  return button;
-}
-
-function positionDeleteButton(button, referenceElement, type, index) {
-  const rect = referenceElement.getBoundingClientRect();
-  const containerRect = referenceElement.closest('.table-container').getBoundingClientRect();
-  
-  if (type === 'column') {
-    const colspan = parseInt(referenceElement.colSpan) || 1;
-    const realIndex = parseInt(referenceElement.dataset.realIndex);
-    const cellWidth = rect.width / colspan;
-    const offset = index - realIndex;  // Calculer le décalage dans la cellule fusionnée
-    const left = rect.left - containerRect.left + offset * cellWidth + (cellWidth / 2);
-    button.style.left = `${left}px`;
-    button.style.top = '5px';
-  } else {
-    const top = rect.top - containerRect.top + (rect.height / 2);
-    button.style.top = `${top}px`;
-    button.style.left = '5px';
-  }
-}
-
-function getRowIndex(cell) {
-  return cell.closest('tr').rowIndex;
-}
-
-function getColumnIndices(cell) {
-  const startIndex = parseInt(cell.querySelector('.editable-cell')?.dataset.cell);
-  const colspan = parseInt(cell.colSpan) || 1;
-  return Array.from({length: colspan}, (_, i) => startIndex + i);
-}
-
-function showDeleteButtons(rowIndex, colIndices) {
-  const buttons = document.querySelectorAll('.delete-button');
-  buttons.forEach(button => {
-    if ((button.dataset.type === 'row' && button.dataset.index == rowIndex) ||
-        (button.dataset.type === 'column' && colIndices.includes(parseInt(button.dataset.index)))) {
-      button.style.display = 'flex';
-    } else {
-      button.style.display = 'none';
-    }
-  });
-}
-
-function hideAllDeleteButtons() {
-  document.querySelectorAll('.delete-button').forEach(button => {
-      button.style.display = 'none';
-  });
-}
-
-function confirmDelete(type, index) {
-  const modal = createConfirmationModal(type, index);
-  document.body.appendChild(modal);
-}
-
-function createConfirmationModal(type, index) {
-  const modalBackdrop = document.createElement('div');
-  modalBackdrop.className = 'modal-backdrop';
-  
-  const modal = document.createElement('div');
-  modal.className = 'modal';
-  
-  const message = document.createElement('p');
-  message.textContent = `Êtes-vous sûr de vouloir supprimer cette ${type === 'row' ? 'ligne' : 'colonne'} ?`;
-  
-  const buttonContainer = document.createElement('div');
-  buttonContainer.className = 'modal-buttons';
-  
-  const confirmButton = document.createElement('button');
-  confirmButton.textContent = 'Confirmer';
-  confirmButton.className = 'window-btn';
-  confirmButton.onclick = () => {
-      deleteTableElement(type, index);
-      closeModal(modal, modalBackdrop);
   };
-  
-  const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Annuler';
-  cancelButton.className = 'export-btn';
-  cancelButton.onclick = () => closeModal(modal, modalBackdrop);
-  
-  buttonContainer.appendChild(cancelButton);
-  buttonContainer.appendChild(confirmButton);
-  
-  modal.appendChild(message);
-  modal.appendChild(buttonContainer);
-  
-  modalBackdrop.appendChild(modal);
-  
-  modalBackdrop.style.display = 'block';
-  modal.style.display = 'block';
-  
-  return modalBackdrop;
-}
 
-function closeModal(modal, backdrop) {
-  modal.remove();
-  backdrop.remove();
-}
+  canvas.onmousemove = (e) => {
+    if (!selectedZone) return;
+    const { offsetX, offsetY } = e;
 
-async function deleteTableElement(type, index) {
-  if (type === 'row') {
-      tableData.splice(index, 1);
-  } else {
-      // Suppression de colonne
-      tableData.forEach(row => {
-          const value = row[index];
-          const nextValue = row[index + 1];
-
-          if (value !== '_' && nextValue === '_') {
-              // Si la colonne suivante est fusionnée, déplacer le contenu
-              row[index + 1] = value;
-          }
-          row.splice(index, 1);
-      });
-  }
-  
-  if (isWindowMode) {
-      await chrome.storage.local.set({ tableData: tableData });
-  }
-  
-  showResults(tableData);
-}
-
-function setupCellSelection(table) {
-  // Créer le menu contextuel
-  createContextMenu();
-  
-  // Gestionnaire de la sélection
-  table.addEventListener('mousedown', (e) => {
-      if (e.button === 0) { // Clic gauche
-          const cell = e.target.closest('.editable-cell');
-          if (!cell) return;
-          
-          // Si on est en train d'éditer une cellule, ne pas démarrer la sélection
-          if (document.querySelector('.cell-editor')) return;
-
-          if (!e.ctrlKey) {
-              clearSelection();
-          }
-          
-          toggleCellSelection(cell);
-          isSelecting = true;
-          e.preventDefault(); // Empêcher la sélection de texte par défaut
-      }
-  });
-  
-  table.addEventListener('mouseover', (e) => {
-      if (!isSelecting) return;
-      
-      const cell = e.target.closest('.editable-cell');
-      if (cell && !cell.classList.contains('selected')) {
-          toggleCellSelection(cell);
-      }
-  });
-  
-  document.addEventListener('mouseup', () => {
-    if (isSelecting) {
-      isSelecting = false;
-      validateSelection();
+    if (isDragging) {
+      selectedZone.x = offsetX - dragOffsetX;
+      selectedZone.y = offsetY - dragOffsetY;
+      draw();
     }
-  });
-  
-  // Gestionnaire du menu contextuel
-  table.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      const cell = e.target.closest('.editable-cell');
-      if (!cell) return;
-      
-      if (selectedCells.length > 1) {
-          showContextMenu(e.pageX, e.pageY);
-      }
-  });
-}
 
-function createContextMenu() {
-  contextMenu = document.createElement('div');
-  contextMenu.className = 'context-menu';
-  
-  const mergeOption = document.createElement('div');
-  mergeOption.className = 'context-menu-item';
-  mergeOption.textContent = 'Fusionner les cellules';
-  mergeOption.onclick = mergeCells;
-  
-  contextMenu.appendChild(mergeOption);
-  document.body.appendChild(contextMenu);
-  
-  // Fermer le menu au clic ailleurs
-  document.addEventListener('click', (e) => {
-      if (!e.target.closest('.context-menu')) {
-          hideContextMenu();
-      }
-  });
-}
+    if (isResizing) {
+      selectedZone.w = offsetX - selectedZone.x;
+      selectedZone.h = offsetY - selectedZone.y;
+      draw();
+    }
+  };
 
-function showContextMenu(x, y) {
-  contextMenu.style.display = 'block';
-  contextMenu.style.left = `${x}px`;
-  contextMenu.style.top = `${y}px`;
-}
+  canvas.onmouseup = () => {
+    selectedZone = null;
+    isDragging = false;
+    isResizing = false;
+  };
 
-function hideContextMenu() {
-  if (contextMenu) {
-      contextMenu.style.display = 'none';
+  canvas.addEventListener("contextmenu", (e) => {
+  e.preventDefault(); // empêche le menu du clic droit par défaut
+  const { offsetX, offsetY } = e;
+
+  // Trouve une zone cliquée
+  const index = zones.findIndex(zone =>
+    offsetX >= zone.x && offsetX <= zone.x + zone.w &&
+    offsetY >= zone.y && offsetY <= zone.y + zone.h
+  );
+
+  if (index !== -1) {
+    zones.splice(index, 1); // Supprime la zone
+    draw(); // Redessine
   }
-}
+});
 
-function toggleCellSelection(cell) {
-  // Vérifier si on est en train d'éditer
-  if (cell.querySelector('.cell-editor')) return;
-
-  cell.classList.toggle('selected');
-  if (cell.classList.contains('selected')) {
-      selectedCells.push(cell);
-  } else {
-      selectedCells = selectedCells.filter(c => c !== cell);
-  }
-}
-
-function clearSelection() {
-  selectedCells.forEach(cell => {
-      cell.classList.remove('selected');
-      cell.classList.remove('invalid-selection');
-  });
-  selectedCells = [];
-  hideContextMenu();
-}
-
-function validateSelection() {
-  if (selectedCells.length <= 1) {
-      clearSelection();
-      return;
-  }
-  
-  // Vérifier que les cellules sont sur la même ligne
-  const firstRow = selectedCells[0].closest('tr');
-  const allSameRow = selectedCells.every(cell => cell.closest('tr') === firstRow);
-  
-  if (allSameRow) {
-      // Obtenir tous les indices réels disponibles (non fusionnés) dans la ligne
-      const rowIndex = parseInt(firstRow.firstElementChild.querySelector('.editable-cell').dataset.row);
-      const availableIndices = tableData[rowIndex]
-          .map((cell, index) => cell !== '_' ? index : -1)
-          .filter(index => index !== -1);
-
-      // Obtenir les indices des cellules sélectionnées
-      const selectedIndices = selectedCells
-          .map(cell => parseInt(cell.dataset.cell))
-          .sort((a, b) => a - b);
-
-      // Vérifier que les indices sélectionnés sont consécutifs dans availableIndices
-      const selectedPositions = selectedIndices.map(index => availableIndices.indexOf(index));
-      const isAdjacent = selectedPositions.every((pos, idx) => {
-          return idx === 0 || pos === selectedPositions[idx - 1] + 1;
-      });
-
-      if (!isAdjacent) {
-          selectedCells.forEach(cell => cell.classList.add('invalid-selection'));
-          setTimeout(() => {
-              selectedCells.forEach(cell => cell.classList.remove('invalid-selection'));
-              clearSelection();
-          }, 1000);
-      }
-  } else {
-      clearSelection();
-  }
-}
-
-async function mergeCells() {
-  if (selectedCells.length <= 1) return;
-  
-  // Obtenir les indices triés
-  const rowIndex = parseInt(selectedCells[0].dataset.row);
-  const cellIndices = selectedCells
-      .map(cell => parseInt(cell.dataset.cell))
-      .sort((a, b) => a - b);
-  
-  // Créer le contenu fusionné avec tous les contenus
-  let mergedContent = cellIndices
-      .map(index => tableData[rowIndex][index])
-      .join(' ');
-  
-  // Mettre à jour les données
-  cellIndices.forEach((cellIndex, idx) => {
-      if (idx === 0) {
-          // Première cellule : contient le contenu fusionné
-          tableData[rowIndex][cellIndex] = mergedContent;
-      } else {
-          // Autres cellules : marquées comme fusionnées
-          tableData[rowIndex][cellIndex] = '_';
-      }
+  // Gestion des boutons
+  document.getElementById("addZoneBtn")?.addEventListener("click", () => {
+    zones.push({ x: 50, y: 50, w: 100, h: 60 });
+    draw();
   });
 
-  // Si nous sommes en mode fenêtre, mettre à jour le storage
-  if (isWindowMode) {
-      await chrome.storage.local.set({ tableData: tableData });
-  }
-  
-  // Mettre à jour l'affichage
-  hideContextMenu();
-  clearSelection();
-  showResults(tableData);
-}
+document.getElementById("saveZonesBtn")?.addEventListener("click", async () => {
+  // Échelle
+  const scaleX = realImageSize.width / canvas.width;
+  const scaleY = realImageSize.height / canvas.height;
 
-function setupPreviewTabs() {
-  const tabs = document.querySelectorAll('.tab');
-  const previewPanels = document.querySelectorAll('.preview-panel');
-  
-  // Gestionnaire de clic sur les onglets
-  tabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      // Retirer la classe active de tous les onglets et panels
-      tabs.forEach(t => t.classList.remove('active'));
-      previewPanels.forEach(p => p.classList.remove('active'));
-      
-      // Ajouter la classe active à l'onglet cliqué et son panel
-      tab.classList.add('active');
-      const tabType = tab.dataset.tab;
-      document.getElementById(`preview-${tabType}`).classList.add('active');
-      
-      // Mettre à jour l'aperçu
-      updatePreview();
+  const scaledZones = zones.map(z => ({
+    x: Math.round(z.x ),
+    y: Math.round(z.y ),
+    w: Math.round(z.w ),
+    h: Math.round(z.h )
+  }));
+
+  try {
+    const res = await fetch("http://localhost:8000/reanalyze-ocr", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        zones: scaledZones,
+        canvas_width: canvas.width,
+        canvas_height: canvas.height
+      })
     });
-  });
-}
+    const json = await res.json();
+    console.log("✅ Résultat OCR :", json.data);
+    displayTable(json.data);
+  } catch (e) {
+    console.error("❌ Erreur d'envoi :", e);
+  }
+});
 
-function updatePreview() {
-  if (!tableData) return;
-  
-  // Mettre à jour l'aperçu CSV
-  const csvPreview = document.querySelector('#preview-csv .preview-code');
-  csvPreview.textContent = convertToCSV(tableData);
-  
-  // Mettre à jour l'aperçu JSON
-  const jsonPreview = document.querySelector('#preview-json .preview-code');
-  jsonPreview.textContent = convertToJSON(tableData);
 }
