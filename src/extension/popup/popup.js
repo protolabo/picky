@@ -1,6 +1,7 @@
 let hotInstance = null;
 let tableHistory = [];
 let originalTableData = null;
+let pendingExport = null;
 console.log("✅ popup_fixed.js bien chargé !");
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -184,6 +185,60 @@ if (window.location.search.includes("mode=window")) {
   return hierarchy;
 }
 
+function showExportPreview(content, type, fileName, currentMode, dataContext) {
+  const section = document.getElementById("export-preview-section");
+  const preview = document.getElementById("export-preview-content");
+  const confirmBtn = document.getElementById("confirm-export-btn");
+  const cancelBtn = document.getElementById("cancel-export-btn");
+  const switchBtns = document.getElementById("export-switch-buttons");
+  const switchToRow = document.getElementById("switch-to-row");
+  const switchToCol = document.getElementById("switch-to-column");
+
+  preview.textContent = content;
+  section.classList.remove("hidden");
+  
+
+  let pending = { type, content, fileName };
+
+  confirmBtn.onclick = () => {
+    const blob = new Blob([pending.content], { type: type === 'csv' ? "text/csv" : "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = pending.fileName;
+    a.click();
+
+    section.classList.add("hidden");
+    switchBtns.classList.add("hidden");
+  };
+
+  cancelBtn.onclick = () => {
+    section.classList.add("hidden");
+    switchBtns.classList.add("hidden");
+  };
+
+  switchToRow.onclick = () => {
+    const result = convertHierarchyToRowJson(dataContext.hierarchical);
+    const json = JSON.stringify(result, null, 2);
+    preview.textContent = json;
+    pending = { content: json, type: "json", fileName: "table_par_ligne.json" };
+  };
+
+  switchToCol.onclick = () => {
+    const json = JSON.stringify(dataContext.hierarchical, null, 2);
+    preview.textContent = json;
+    pending = { content: json, type: "json", fileName: "table_arborescent.json" };
+  };
+  // Afficher ou masquer les boutons de basculement
+  console.log("Prévisualisation type:", type);
+  if (switchBtns) {
+    if (type === "json") {
+      switchBtns.classList.remove("hidden");
+    } else {
+      switchBtns.classList.add("hidden");
+    }
+  }
+}
 function attachButtonListeners() {
   document.getElementById("new-add-row")?.addEventListener("click", () => {
     const currentData = hotInstance.getData();
@@ -193,125 +248,79 @@ function attachButtonListeners() {
 }
 
 function attachExportListeners() {
-  // Bouton Export CSV
-  document.getElementById("export-csv")?.addEventListener("click", () => {
-    if (!hotInstance) return;
+  // Bouton Export excel
+  document.getElementById("export-xlsx")?.addEventListener("click", () => {
+  if (!hotInstance) return;
 
-    const data = hotInstance.getData();
-    const csvContent = data.map(row =>
-      row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(",")
-    ).join("\n");
+  // Cacher les boutons JSON mode (ligne/colonne)
+  
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", "tableau.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const data = hotInstance.getData();
+
+  // Convertir en feuille Excel
+  const worksheet = XLSX.utils.aoa_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Tableau");
+
+  // Créer un fichier .xlsx
+  XLSX.writeFile(workbook, "tableau.xlsx");
   });
 
-  // Bouton Export JSON
+// EXPORT CSV
+  document.getElementById("export-csv")?.addEventListener("click", () => {
+    // Masquer les boutons ligne/colonne JSON
+      
+    if (!hotInstance) return;
+
+      const data = hotInstance.getData();
+      const csvContent = data
+        .slice(0, 10)
+        .map(row =>
+          row.map(cell =>
+            `"${String(cell).replace(/\r?\n/g, ' ').replace(/"/g, '""')}"`
+          ).join(",")
+        ).join("\n");
+
+      showExportPreview(csvContent, "csv", "tableau.csv");
+      
+  });
+
+  // EXPORT JSON
   document.getElementById("export-json")?.addEventListener("click", () => {
   if (!hotInstance) {
     alert("Aucun tableau à exporter");
     return;
   }
-
+  
   const data = hotInstance.getData();
   const rowCount = hotInstance.countRows();
   const colCount = hotInstance.countCols();
 
-  const topHeaders = data[0]; // Ligne 0
+  const hierarchical  = buildHierarchicalJson(data, rowCount, colCount);
+  const rowWise = convertHierarchyToRowJson(hierarchical);
+  const jsonStr = JSON.stringify(rowWise, null, 2);
 
-  const columnGroups = []; // Contient : { parentLabel, colIndex, childStartRow }
 
-  let currentParent = null;
+  showExportPreview(jsonStr, "json", "table_par_ligne.json", "row", { hierarchical });
 
-  // Étape 1 : déterminer le parent de chaque colonne
-  for (let col = 0; col < colCount; col++) {
-    const cell = topHeaders[col];
-
-    if (cell && cell.trim() !== "") {
-      currentParent = cell.trim();
-    }
-
-    columnGroups.push({
-      parent: currentParent,
-      col: col
-    });
-  }
-
-  // Étape 2 : Regrouper les colonnes par parent
-  const groupedByParent = {};
-  for (const group of columnGroups) {
-    if (!groupedByParent[group.parent]) {
-      groupedByParent[group.parent] = [];
-    }
-    groupedByParent[group.parent].push(group.col);
-  }
-
-  // Étape 3 : Construire l’arborescence
-  const result = [];
-
-  for (const parentLabel in groupedByParent) {
-    const columns = groupedByParent[parentLabel];
-
-    if (columns.length === 1) {
-      // Cas simple : un seul enfant = liste plate
-      const col = columns[0];
-      const children = [];
-
-      for (let row = 1; row < rowCount; row++) {
-        const value = data[row][col];
-        if (value && value !== "") {
-          children.push(value);
-        }
-      }
-
-      result.push({
-        label: parentLabel,
-        children: children.map(v => ({ label: v }))
-      });
-
-    } else {
-      // Cas complexe : plusieurs colonnes enfants
-      const parent = { label: parentLabel, children: [] };
-
-      for (const col of columns) {
-        const childLabel = data[1][col]; // ligne 1 = nom du sous-colonne
-        const children = [];
-
-        for (let row = 2; row < rowCount; row++) {
-          const val = data[row][col];
-          if (val && val !== "") {
-            children.push({ label: val });
-          }
-        }
-
-        parent.children.push({
-          label: childLabel,
-          children: children
-        });
-      }
-
-      result.push(parent);
-    }
-  }
-
-  // ✅ Affichage console
-  console.log("📦 JSON structuré :", result);
-
-  // 📁 Export JSON
-  const jsonStr = JSON.stringify(result, null, 2);
-  const blob = new Blob([jsonStr], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "table_arborescent.json";
-  a.click();
 });
+document.getElementById("export-xml")?.addEventListener("click", () => {
+  if (!hotInstance) return;
+  
+  const data = hotInstance.getData();
+  const rowCount = hotInstance.countRows();
+  const colCount = hotInstance.countCols();
+
+  const hierarchical = buildHierarchicalJson(data, rowCount, colCount);
+  const xmlStr = generateXmlFromHierarchy(hierarchical);
+
+  
+
+  showExportPreview(xmlStr, "xml", "tableau.xml");
+  // Masquer les boutons ligne/colonne JSON
+  
+});
+
 }
 
   document.getElementById("new-add-col")?.addEventListener("click", () => {
@@ -352,6 +361,232 @@ document.querySelector(".table-container").addEventListener("click", function (e
     }
   }
 });
+
+function buildHierarchicalJson(data, rowCount, colCount, maxRows = 10) {
+  const topHeaders = data[0];
+  const columnGroups = [];
+  let currentParent = null;
+
+  for (let col = 0; col < colCount; col++) {
+    const cell = topHeaders[col];
+    if (cell && cell.trim() !== "") {
+      currentParent = cell.trim();
+    }
+    columnGroups.push({ parent: currentParent, col: col });
+  }
+
+  const groupedByParent = {};
+  for (const group of columnGroups) {
+    if (!groupedByParent[group.parent]) {
+      groupedByParent[group.parent] = [];
+    }
+    groupedByParent[group.parent].push(group.col);
+  }
+
+  const result = [];
+
+  for (const parentLabel in groupedByParent) {
+    const columns = groupedByParent[parentLabel];
+
+    if (columns.length === 1) {
+      const col = columns[0];
+      const children = [];
+
+      for (let row = 1; row < Math.min(rowCount, maxRows + 1); row++) {
+        const value = data[row][col];
+        if (value && value !== "") {
+          children.push(value);
+        }
+      }
+
+      result.push({
+        label: parentLabel,
+        children: children.map(v => ({ label: v }))
+      });
+
+    } else {
+      const parent = { label: parentLabel, children: [] };
+
+      for (const col of columns) {
+        const childLabel = data[1][col];
+        const children = [];
+
+        for (let row = 2; row < Math.min(rowCount, maxRows + 2); row++) {
+          const val = data[row][col];
+          if (val && val !== "") {
+            children.push({ label: val });
+          }
+        }
+
+        parent.children.push({
+          label: childLabel,
+          children: children
+        });
+      }
+
+      result.push(parent);
+    }
+  }
+
+  return result;
+}
+
+function buildRowOrientedJson(data, rowCount, colCount, maxRows = 10) {
+  const headerRow1 = data[0]; // Ligne des parents
+  const headerRow2 = data[1]; // Ligne des sous-colonnes
+
+  const headers = [];
+  let currentParent = null;
+
+  // Étape 1 : associer parent + sous-colonne à chaque colonne
+  for (let col = 0; col < colCount; col++) {
+    const parent = headerRow1[col];
+    const child = headerRow2[col];
+
+    if (parent && parent.trim() !== "") {
+      currentParent = parent.trim();
+    }
+
+    headers.push({
+      parent: currentParent,
+      child: child
+    });
+  }
+
+  // Étape 2 : traiter les lignes (à partir de la 3ᵉ ligne)
+  const result = [];
+
+  for (let row = 2; row < Math.min(rowCount, maxRows + 2); row++) {
+    const rowData = {};
+    for (let col = 0; col < colCount; col++) {
+      const cell = data[row][col];
+      const { parent, child } = headers[col];
+
+      if (!parent) continue; // ignorer les colonnes sans parent
+
+      if (!child || child === parent || child === "") {
+        // Pas de sous-colonne
+        rowData[parent] = cell;
+      } else {
+        if (!rowData[parent]) rowData[parent] = {};
+        rowData[parent][child] = cell;
+      }
+    }
+    result.push(rowData);
+  }
+
+  return result;
+}
+
+function convertHierarchyToRowJson(hierarchicalData) {
+  const clean = (str) => str?.replace(/\n/g, ' ').trim();
+
+  // Étape 1 : déterminer combien de lignes on doit générer
+  let maxRows = 0;
+  for (const parent of hierarchicalData) {
+    if (!parent.children || parent.children.length === 0) continue;
+
+    if (!parent.children[0].children) {
+      maxRows = Math.max(maxRows, parent.children.length);
+    } else {
+      maxRows = Math.max(maxRows, parent.children[0].children.length);
+    }
+  }
+
+  // Étape 2 : construire les lignes
+  const result = [];
+
+  for (let i = 0; i < maxRows; i++) {
+    const row = {};
+
+    for (const parent of hierarchicalData) {
+      const parentLabel = clean(parent.label);
+
+      if (!parent.children || parent.children.length === 0) continue;
+
+      if (!parent.children[0].children) {
+        // Cas simple : parent → valeurs directes
+        const child = parent.children[i];
+        if (child) {
+          row[parentLabel] = clean(child.label);
+        }
+      } else {
+        // Cas imbriqué : parent → enfants → valeurs
+        const subObj = {};
+        for (const child of parent.children) {
+          const childLabel = clean(child.label);
+          const value = child.children?.[i]?.label ?? null;
+          if (value !== null) {
+            subObj[childLabel] = clean(value);
+          }
+        }
+        row[parentLabel] = subObj;
+      }
+    }
+
+    result.push(row);
+  }
+
+  return result;
+}
+
+function escapeXml(str) {
+  return String(str)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function normalizeTag(label) {
+  return escapeXml(label.replace(/\n/g, ' ').replace(/[^a-zA-Z0-9_]/g, "_").replace(/_+/g, "_").replace(/^_+|_+$/g, ""));
+}
+
+function generateXmlFromHierarchy(hierarchicalData) {
+  // 1. Obtenir le nombre de lignes à générer
+  let maxRows = 0;
+  for (const parent of hierarchicalData) {
+    if (!parent.children || parent.children.length === 0) continue;
+    if (!parent.children[0].children) {
+      maxRows = Math.max(maxRows, parent.children.length);
+    } else {
+      maxRows = Math.max(maxRows, parent.children[0].children.length);
+    }
+  }
+
+  const rows = [];
+
+  // 2. Construire chaque <row>
+  for (let i = 0; i < maxRows; i++) {
+    let rowXml = "  <row>\n";
+
+    for (const parent of hierarchicalData) {
+      const parentTag = normalizeTag(parent.label);
+      if (!parent.children || parent.children.length === 0) continue;
+
+      if (!parent.children[0].children) {
+        // Ligne plate
+        const val = parent.children[i]?.label ?? "";
+        rowXml += `    <${parentTag}>${escapeXml(val)}</${parentTag}>\n`;
+      } else {
+        // Ligne imbriquée
+        rowXml += `    <${parentTag}>\n`;
+        for (const child of parent.children) {
+          const childTag = normalizeTag(child.label);
+          const val = child.children?.[i]?.label ?? "";
+          rowXml += `      <${childTag}>${escapeXml(val)}</${childTag}>\n`;
+        }
+        rowXml += `    </${parentTag}>\n`;
+      }
+    }
+
+    rowXml += "  </row>";
+    rows.push(rowXml);
+  }
+
+  return `<table>\n${rows.join("\n")}\n</table>`;
+}
 
 
 

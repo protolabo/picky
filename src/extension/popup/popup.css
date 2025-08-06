@@ -1,3 +1,86 @@
+#export-preview-section {
+  margin-top: 20px;
+  padding: 16px;
+  margin-left: 20px;
+  margin-right: 20px;
+  background-color: #f9fbfd;
+  border: 1px solid #e0e6ed;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+
+#export-preview-section h4 {
+  
+  margin: 0 0 10px;
+
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+}
+
+#export-preview-content {
+  background-color: #ffffff;
+  border: 1px solid #dde3ea;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: #333;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  max-height: 300px;
+}
+
+#export-preview-buttons {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+}
+
+#export-preview-buttons button {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+#confirm-export-btn {
+  background-color: #007bff;
+  color: white;
+}
+
+#confirm-export-btn:hover {
+  background-color: #0056b3;
+}
+
+#cancel-export-btn {
+  background-color: #e0e0e0;
+  color: #333;
+}
+
+#cancel-export-btn:hover {
+  background-color: #c8c8c8;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* Reset et base */
 
 #canvas-wrapper {
@@ -197,7 +280,7 @@ body {
   border-radius: 0 !important;
   margin-bottom: 24px;
   border: 1px solid #e2e8f0;
-  min-height: 400px;
+  min-height: auto;
   overflow: visible ;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
   padding: 0 !important;
@@ -224,12 +307,15 @@ body {
   background: white !important;
   font-size: 13px !important;
   color: #374151 !important;
-  
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .table-container .handsontable th,
 .table-container .handsontable td {
-  padding: 2px 4px !important;
+  
+  vertical-align: middle !important;
   margin: 0 !important;
 }
 
@@ -298,7 +384,7 @@ body {
 }
 
 /* Boutons spécifiques avec couleurs */
-#export-csv, #export-json {
+#export-csv, #export-json, #export-xml, #export-xlsx{
   background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
   color: white;
   border: none;
@@ -306,7 +392,7 @@ body {
   box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
 }
 
-#export-csv:hover, #export-json:hover {
+#export-csv:hover, #export-json:hover, #export-xml:hover, #export-xlsx:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
   background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);

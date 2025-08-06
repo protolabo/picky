@@ -56,17 +56,34 @@
       <div id="export-buttons" class="export-buttons hidden">
         <button class="export-btn" id="export-csv">Exporter en CSV</button>
         <button class="export-btn" id="export-json">Exporter en JSON</button>
+        <button class="export-btn" id="export-xml">Exporter en XML</button>
+        <button class="export-btn" id="export-xlsx">Exporter en Excel</button>
       </div>
 
       
     </div>
   </div>
+  
+  <div id="export-preview-section" class="hidden">
+    <div id="export-switch-buttons" class="hidden" style="margin-bottom: 10px;  gap: 10px;">
+      <button id="switch-to-row" class="export-btn">Exporter par ligne</button>
+      <button id="switch-to-column" class="export-btn">Exporter par colonne</button>
+    </div>
+  <h4>Aperçu </h4>
+  <pre id="export-preview-content"  ></pre>
+  <div style="margin-top: 5px;">
+    
+    <button id="confirm-export-btn" class="export-btn">Valider l'export</button>
+    <button id="cancel-export-btn" class="export-btn" >Annuler</button>
+  </div>
+</div>
 
   <!-- Handsontable JS LOCAL -->
   <script src="libs/handsontable.min.js"></script>
-
+  <script src="libs/xlsx.full.min.js"></script>
   <!-- Ton JS -->
   <script src="popup.js"></script>
+  
   <script src="zone_editor.js"></script>
 </body>
 </html>
