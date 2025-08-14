@@ -39,15 +39,7 @@ async def extract_table(file: UploadFile):
             }
 
         # Valider l'image
-        validation_result = validate_table_image(image)
         
-        if not validation_result["valid"]:
-            return {
-                "success": False,
-                "message": validation_result["commentaire"],
-                "data": None
-            }
-
         # Définir le nom de l'image temporaire
         temp_filename = "temp_image.png"
 
