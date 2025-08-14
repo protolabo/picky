@@ -2,35 +2,51 @@
 
 > **Page web du projet (IFT3150)**: https://protolabo.github.io/picky
 
-## Description du projet 
+# 📊 Picky – Extension Chrome pour l'extraction intelligente de tableaux
 
-Picky est une extension de navigateur conçue pour extraire et manipuler des données tabulaires depuis des pages web. Elle permet de convertir des tableaux, qu'ils soient présents sur une page web ou dans des captures d'écran, en formats d'export communs (CSV, JSON).
+**Picky** est une extension Chrome conçue pour extraire, corriger et exporter des tableaux à partir d’images. Elle utilise un pipeline intelligent basé sur la vision par ordinateur pour convertir n’importe quelle représentation visuelle d’un tableau en données structurées éditables (CSV, JSON, XLSX, XML).
 
-## 📋 Fonctionnalités
+---
 
-- **Extraction de tableaux** : 
-  - Capture directe depuis les pages web via html2canvas
-  - Support des tableaux en format image
-  - Upload manuel d'images de tableaux 
-- **Traitement d'image** : 
-  - Détection de tableaux dans les images
-  - Extraction des données tabulaires
-- **Modification des données** : 
-  - Modification directe des cellules
-  - Suppression de lignes et colonnes
-  - Fusion de cellules horizontale
-  - Interface d'édition en mode popup et plein écran
-- **Exportation flexible** :
-  - Format CSV avec support des cellules fusionnées
-  - Format JSON structuré
-  - Prévisualisation des exports en temps réel
+## 🔧 Fonctionnalités
 
-- **Interface Conviviale** : Une interface facile à utiliser, permettant une gestion simple et efficace des tableaux extraits.
+### 📥 Import & Traitement
+- Import d’images via glisser-déposer ou sélection de fichier
+- Détection de la structure du tableau via **PyramidTabNet (IA)**
+- Extraction du texte contenu dans chaque cellule avec **Tesseract OCR**
+- Nettoyage des cellules détectées : fusion, alignement, insertion automatique
 
-## 🌐 Infrastructure
+### ✏️ Édition interactive
+- **Canvas HTML5** pour ajuster manuellement les zones de détection
+  - Déplacement, redimensionnement, ajout, suppression de zones
+- **Relance de l’analyse OCR** après ajustements
+- **Tableau interactif (Handsontable)** :
+  - Modification directe du texte
+  - Ajout/suppression de lignes et colonnes
+  - Fusion manuelle de cellules
+  - Réinitialisation des données OCR
 
-**Frontend**: Extension Chrome (HTML, CSS, JavaScript)
-**Backend**: Python avec FastAPI, PyTesseract, OpenCV
+### 📤 Export
+- Export aux formats : **CSV**, **JSON par ligne**, **JSON hiérarchique**, **XML**, **XLSX**
+- Gestion des cellules fusionnées
+- Aperçu en temps réel des fichiers d’export
+
+---
+
+## 🧱 Architecture technique
+
+### 🖥 Frontend
+- **Extension Chrome** (popup et mode plein écran)
+- Canvas HTML5 pour l’affichage de l’image et des zones OCR
+- **Handsontable** pour l’édition du tableau
+- Technologies : HTML / CSS / JavaScript (vanilla)
+
+### ⚙️ Backend
+- **FastAPI** pour la communication avec l’extension
+- **OpenCV** pour le traitement et l’alignement des cellules
+- **Pytesseract** pour l’OCR
+- **PyramidTabNet** pour la détection de la structure tabulaire à partir d’images
+
 
 # 💻 Installation
 - **intaller Miniconda 23.5.2** :
