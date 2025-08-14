@@ -81,18 +81,158 @@
 
 ## Semaine 5
 
+??? note "To Do"
+- Finaliser la relance OCR à partir des zones modifiées manuellement  
+- Intégrer une prévisualisation du tableau OCR dans Handsontable  
+- Gérer l’import d’images multiples (pipeline automatique)
+
+!!! info "Contenu réalisé"
+- Intégration du bouton de **relance OCR** après modification des zones  
+- Synchronisation entre les zones du canvas et la mise à jour du tableau via FastAPI  
+- Affichage conditionnel des erreurs si aucune cellule détectée  
+- Prise en charge des chemins d’accès automatiques pour chaque image importée
+
+!!! abstract "Prochaines étapes"
+- Créer un système d’historique (undo/redo)  
+- Ajouter la suppression/édition directe des zones sur le canvas
+
+---
+
 ## Semaine 6
+
+??? note "To Do"
+- Ajouter des boutons pour manipuler le tableau (ajout/suppression ligne ou colonne)  
+- Tester la fusion manuelle de cellules  
+- Implémenter l’annulation (undo/redo)
+
+!!! info "Contenu réalisé"
+- Intégration de **Handsontable** pour afficher le tableau OCR  
+- Ajout des boutons de **fusion**, **suppression**, **ajout de lignes/colonnes**  
+- Structure normalisée du tableau avec "_" pour cellules fusionnées  
+- Détection automatique des sélections valides pour la fusion
+
+!!! abstract "Prochaines étapes"
+- Préparer la structure d’export vers plusieurs formats  
+- Améliorer le système d’édition (multi-ligne, raccourcis clavier)
+
+---
 
 ## Semaine 7
 
+??? note "To Do"
+- Ajouter la prévisualisation des exports (CSV/JSON/XML)  
+- Support du JSON hiérarchique  
+- Ajouter un export XLSX
+
+!!! info "Contenu réalisé"
+- Ajout d’un module d’**export en temps réel**  
+- Possibilité de **basculer entre JSON brut, JSON hiérarchique et XML**  
+- Conversion dynamique depuis Handsontable vers CSV  
+- Aperçu dans un bloc HTML `<pre>` avant téléchargement
+
+!!! abstract "Prochaines étapes"
+- Support complet du format XLSX via `xlsx.js`  
+- Ajout d’un export image du canvas (visualisation finale)
+
+---
+
 ## Semaine 8
+
+??? note "To Do"
+- Intégrer le format XLSX avec fusion supportée  
+- Ajouter des feedbacks visuels sur les actions utilisateur  
+- Créer un export image des cellules annotées
+
+!!! info "Contenu réalisé"
+- Export **XLSX** complet avec gestion de fusion  
+- Export **image avec cellules visibles** grâce à `draw_cells_on_image()`  
+- Ajout d’un système de **prévisualisation d’export** dans une fenêtre dédiée
+
+!!! abstract "Prochaines étapes"
+- Intégration de `html2canvas` pour la capture directe de tableau depuis la page web
+
+---
 
 ## Semaine 9
 
+??? note "To Do"
+- Ajouter la capture de tableaux depuis les pages web  
+- Tester l’injection dynamique du script de capture
+
+!!! info "Contenu réalisé"
+- Intégration complète de **html2canvas**  
+- Création d’un **overlay de sélection** sur la page web  
+- Capture de la zone sélectionnée et envoi direct vers le backend  
+- Fermeture du popup temporairement lors de la sélection
+
+!!! abstract "Prochaines étapes"
+- Ajouter un système de feedback contextuel (aide sur l’interface)  
+- Commencer à structurer le rapport final
+
+---
+
 ## Semaine 10
+
+??? note "To Do"
+- Ajouter une icône d’aide/contextuelle sur l’interface  
+- Préparer un système de sauvegarde temporaire des sessions
+
+!!! info "Contenu réalisé"
+- Intégration d’une **info-bulle** affichée au survol de Handsontable  
+- Explication du **clic droit pour fusionner / supprimer / undo / redo**  
+- Début de l’**écriture du rapport** (sections 1 à 4)
+
+!!! abstract "Prochaines étapes"
+- Finaliser les figures (diagramme de flux, architecture)  
+- Organiser les captures pour illustrer les fonctionnalités
+
+---
 
 ## Semaine 11
 
+??? note "To Do"
+- Ajouter une animation de chargement  
+- Intégrer un sommaire cliquable dans le rapport PDF
+
+!!! info "Contenu réalisé"
+- Ajout d’un **système de chargement dynamique** (`#loading`)  
+- Génération automatique du **sommaire PDF** à partir des titres de sections  
+- Écriture de la section “Conception” avec détails sur le canvas, le tableau et les exports
+
+!!! abstract "Prochaines étapes"
+- Continuer la mise en page du rapport  
+- Créer une section “Suivi de projet” avec synthèse des semaines
+
+---
+
 ## Semaine 12
 
+??? note "To Do"
+- Organiser tous les fichiers d'exemples et de test  
+- Finaliser le rapport : mise en page, visuels, mise en forme
+
+!!! info "Contenu réalisé"
+- Réécriture du rapport dans un format stylisé avec `Heading1`, `Heading2`  
+- Nettoyage de la structure (espacement, mise en gras des titres)  
+- Création d’une **version PDF et DOCX propre** pour la remise finale
+
+!!! abstract "Prochaines étapes"
+- Préparer les démonstrations vidéo ou GIFs  
+- Éventuellement publier sur GitHub ou héberger une démo
+
+---
+
 ## Semaine 13
+
+??? note "To Do"
+- Finaliser les derniers tests et démonstrations  
+- Relire l’ensemble du code et du rapport
+
+!!! info "Contenu réalisé"
+- Derniers ajustements (marges, messages d’erreur, détails d’export)  
+- Rapport terminé avec : contexte, problématique, analyse, conception, frontend/backend, résultats et conclusion  
+- Code et documentation prêts pour la remise
+
+!!! abstract "Prochaines étapes"
+- Soumettre le projet  
+- Préparer la présentation orale (si applicable)
