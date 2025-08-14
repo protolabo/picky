@@ -85,4 +85,4 @@ Si vous êtes intéressé à participer au projet, veuillez prendre contact avec
 ## Contributeurs
 
 - Mehdi Lagnaoui [@MehdiLagnaoui](https://github.com/MehdiLagnaoui)
-- Ismail Simo 
+- Ismail Simo [@Ismail Simo](https://github.com/ismail220)
