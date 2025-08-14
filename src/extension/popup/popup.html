@@ -17,7 +17,7 @@
         Glissez et déposez votre image ici<br>ou<br>
         <button id="upload-btn">Choisir un fichier</button>
         <input type="file" id="file-input" accept="image/*" hidden>
-        <button id="capture-btn">Capturer un tableau</button>
+        
       </div>
     </div>
     
@@ -50,7 +50,15 @@
 
     
     <div id="result" class="result hidden">
-      
+      <div id="table-help" style="display: flex; align-items: center; gap: 5px; margin-bottom: 8px;">
+        <span style="font-weight: 600;"></span>
+        <span class="info-icon" title="Vous pouvez :
+      - Ajouter/supprimer une colonne avec un clic droit
+      - Fusionner des cellules en les sélectionnant puis clic droit
+      - Utiliser le clic droit pour annuler/refaire (Undo/Redo)">
+          ℹ️
+        </span>
+      </div>
       <div class="table-container"></div>
 
       <div id="export-buttons" class="export-buttons hidden">
@@ -65,9 +73,13 @@
   </div>
   
   <div id="export-preview-section" class="hidden">
-    <div id="export-switch-buttons" class="hidden" style="margin-bottom: 10px;  gap: 10px;">
+    <div id="export-switch-buttons-json" class="hidden" style="margin-bottom: 10px;  gap: 10px;">
+      <button id="raw-export-json" class="export-btn">Export brut</button>
       <button id="switch-to-row" class="export-btn">Exporter par ligne</button>
       <button id="switch-to-column" class="export-btn">Exporter par colonne</button>
+    </div>
+    <div id="export-switch-buttons-xml" class="hidden" style="margin-bottom: 10px;  gap: 10px;">
+      <button id="raw-export-xml" class="export-btn">Export brut</button>
     </div>
   <h4>Aperçu </h4>
   <pre id="export-preview-content"  ></pre>

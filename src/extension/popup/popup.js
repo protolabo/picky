@@ -122,7 +122,21 @@ if (window.location.search.includes("mode=window")) {
 
  //=============================== Fonction ==================================
 
- function buildTableTreeFromColumn(data) {
+ /**
+ * Construit une structure arborescente à partir des données d'un tableau
+ * @param {Array<Array>} data - Données du tableau sous forme de matrice 2D
+ * @returns {Object} Hiérarchie des nœuds sous forme d'objet
+ * 
+ * Cette fonction analyse les données colonne par colonne pour créer une structure
+ * arborescente représentant les relations parent-enfant entre les cellules.
+ * 
+ * Variables principales:
+ * - hierarchy: Objet stockant la structure arborescente {id: {label, parent, children}}
+ * - labelToId: Map pour retrouver rapidement l'ID d'un nœud par son label
+ * - lastParent: Garde en mémoire le dernier parent traité
+ * - nodeId: Compteur pour générer des IDs uniques
+ */
+function buildTableTreeFromColumn(data) {
   const rowCount = data.length;
   const colCount = data[0].length;
 
@@ -185,12 +199,27 @@ if (window.location.search.includes("mode=window")) {
   return hierarchy;
 }
 
+/**
+ * Affiche une prévisualisation du contenu à exporter avec options
+ * @param {string} content - Contenu à prévisualiser
+ * @param {string} type - Type d'export ('csv', 'json', 'xml')
+ * @param {string} fileName - Nom du fichier pour l'export
+ * @param {string} currentMode - Mode d'affichage actuel
+ * @param {Object} dataContext - Contexte des données pour la conversion
+ * 
+ * Cette fonction gère l'interface de prévisualisation avant export:
+ * - Affiche le contenu dans une zone de prévisualisation
+ * - Configure les boutons de confirmation/annulation
+ * - Gère les options de basculement entre formats (ligne/colonne pour JSON)
+ * - Prépare le téléchargement du fichier
+ */
 function showExportPreview(content, type, fileName, currentMode, dataContext) {
   const section = document.getElementById("export-preview-section");
   const preview = document.getElementById("export-preview-content");
   const confirmBtn = document.getElementById("confirm-export-btn");
   const cancelBtn = document.getElementById("cancel-export-btn");
-  const switchBtns = document.getElementById("export-switch-buttons");
+  const switchBtns = document.getElementById("export-switch-buttons-json");
+  const switchBtnsxml = document.getElementById("export-switch-buttons-xml");
   const switchToRow = document.getElementById("switch-to-row");
   const switchToCol = document.getElementById("switch-to-column");
 
@@ -229,6 +258,8 @@ function showExportPreview(content, type, fileName, currentMode, dataContext) {
     preview.textContent = json;
     pending = { content: json, type: "json", fileName: "table_arborescent.json" };
   };
+
+  const rawXmlBtn = document.getElementById("raw-export-xml");
   // Afficher ou masquer les boutons de basculement
   console.log("Prévisualisation type:", type);
   if (switchBtns) {
@@ -238,7 +269,24 @@ function showExportPreview(content, type, fileName, currentMode, dataContext) {
       switchBtns.classList.add("hidden");
     }
   }
+
+  if (switchBtnsxml) {
+    if (type === "xml") {
+      switchBtnsxml.classList.remove("hidden");
+    } else {
+      switchBtnsxml.classList.add("hidden");
+    }
+  }
 }
+/**
+ * Attache les écouteurs d'événements aux boutons d'action du tableau
+ * 
+ * Cette fonction configure les actions pour:
+ * - Ajouter une nouvelle ligne (new-add-row)
+ * - La nouvelle ligne est initialisée vide avec le bon nombre de colonnes
+ * 
+ * Note: Utilise l'opérateur ?. pour une vérification sûre de l'existence du bouton
+ */
 function attachButtonListeners() {
   document.getElementById("new-add-row")?.addEventListener("click", () => {
     const currentData = hotInstance.getData();
@@ -247,8 +295,54 @@ function attachButtonListeners() {
   });
 }
 
+/**
+ * Configure les écouteurs d'événements pour les boutons d'export
+ * 
+ * Cette fonction gère:
+ * - Export Excel (.xlsx)
+ * - Export CSV
+ * - Export JSON (avec options ligne/colonne)
+ * - Export XML
+ * 
+ * Pour chaque format:
+ * 1. Vérifie la présence de données
+ * 2. Convertit les données au format approprié
+ * 3. Affiche une prévisualisation si nécessaire
+ * 4. Gère le téléchargement
+ */
 function attachExportListeners() {
-  // Bouton Export excel
+  document.getElementById("raw-export-xml")?.addEventListener("click", () => {
+  if (!hotInstance) return;
+
+  const data = hotInstance.getData();
+  const rowCount = data.length;
+
+  // Transformation en format brut (pas d'en-têtes hiérarchiques)
+  const rawJson = data.slice(0, rowCount).map(row => {
+    return Object.fromEntries(row.map((cell, i) => [`column${i + 1}`, cell]));
+  });
+
+  // Conversion en XML brut
+  const xmlStr = generateRawXml(rawJson);
+
+  showExportPreview(xmlStr, "xml", "tableau_brut.xml", "raw-xml", {});
+});
+
+    document.getElementById("raw-export-json")?.addEventListener("click", () => {
+    if (!hotInstance) return;
+
+    const data = hotInstance.getData();
+    const rowCount = data.length;
+    const colCount = data[0].length;
+
+    // Export JSON brut
+    const rawJson = data.slice(0, rowCount).map(row => {
+      return Object.fromEntries(row.map((cell, i) => ["column" + (i + 1), cell]));
+    });
+    const jsonStr = JSON.stringify(rawJson, null, 2);
+    showExportPreview(jsonStr, "json", "tableau_brut.json", "raw-json", {});
+  });
+
   document.getElementById("export-xlsx")?.addEventListener("click", () => {
   if (!hotInstance) return;
 
@@ -362,6 +456,22 @@ document.querySelector(".table-container").addEventListener("click", function (e
   }
 });
 
+/**
+ * Construit une représentation JSON hiérarchique des données du tableau
+ * @param {Array<Array>} data - Données du tableau
+ * @param {number} rowCount - Nombre total de lignes
+ * @param {number} colCount - Nombre total de colonnes
+ * @param {number} maxRows - Nombre maximum de lignes à traiter (défaut: 10)
+ * @returns {Array<Object>} Structure JSON hiérarchique
+ * 
+ * Cette fonction organise les données en une structure JSON hiérarchique
+ * en regroupant les colonnes par leurs en-têtes parents.
+ * 
+ * Variables principales:
+ * - topHeaders: Première ligne du tableau contenant les en-têtes principaux
+ * - columnGroups: Stocke les groupes de colonnes avec leurs parents
+ * - currentParent: Garde en mémoire l'en-tête parent actuel
+ */
 function buildHierarchicalJson(data, rowCount, colCount, maxRows = 10) {
   const topHeaders = data[0];
   const columnGroups = [];
@@ -590,6 +700,19 @@ function generateXmlFromHierarchy(hierarchicalData) {
 
 
 
+/**
+ * Affiche les données dans un tableau interactif Handsontable
+ * @param {Array<Array>} data - Données à afficher dans le tableau
+ * 
+ * Cette fonction initialise et configure une instance Handsontable
+ * pour afficher les données avec des fonctionnalités interactives.
+ * 
+ * Étapes principales:
+ * 1. Attache les écouteurs d'événements pour les boutons
+ * 2. Prépare le conteneur
+ * 3. Sauvegarde une copie des données originales
+ * 4. Configure et initialise Handsontable
+ */
 function displayTable(data) {
   attachButtonListeners();
   attachExportListeners();
@@ -657,6 +780,18 @@ function displayTableWithState(data, nestedHeaders) {
   document.getElementById("result").classList.remove("hidden");
   document.getElementById("open-window-div").classList.remove("hidden");
 }
+/**
+ * Affiche les boutons de suppression pour chaque ligne du tableau
+ * 
+ * Cette fonction:
+ * 1. Compte le nombre de lignes dans le tableau
+ * 2. Supprime les boutons existants
+ * 3. Crée un bouton de suppression pour chaque ligne
+ * 4. Positionne les boutons à côté des lignes
+ * 
+ * Le bouton est placé avec un délai pour s'assurer que
+ * le tableau est complètement rendu avant le positionnement.
+ */
 function showDeleteRowButtons() {
   const rows = hotInstance.countRows();
   const tableContainer = document.querySelector(".table-container");
@@ -676,16 +811,16 @@ setTimeout(() => {
     const tableRect = tableContainer.getBoundingClientRect();
 
     const top = rect.top - tableRect.top;
-    const left = -30;
+    const left = 0;
 
-    console.log(`Bouton ligne ${i} ➜ top: ${top}px, left: ${left}px`);
+    console.log(`Bouton ligne ${i} ➜ top: ${top}px, left: ${left }px`);
 
     const btn = document.createElement("button");
     btn.textContent = "❌";
     btn.classList.add("delete-row-btn");
     btn.style.position = "absolute";
     btn.style.top = `${top}px`;
-    btn.style.left = `$0px`;
+    btn.style.left = `${left}px`;
     btn.dataset.row = i;
 
     tableContainer.appendChild(btn);
@@ -748,6 +883,20 @@ function showDeleteColButtons() {
   }, 100);
 }
 
+function generateRawXml(data) {
+  let xml = "<table>\n";
+  for (const row of data) {
+    xml += "  <row>\n";
+    for (const key in row) {
+      const safeVal = String(row[key]).replace(/[&<>]/g, s => ({'&': '&amp;', '<': '&lt;', '>': '&gt;'}[s]));
+      xml += `    <${key}>${safeVal}</${key}>\n`;
+    }
+    xml += "  </row>\n";
+  }
+  xml += "</table>";
+  return xml;
+}
+
 function removeDeleteButtons() {
   document.querySelectorAll(".delete-row-btn").forEach(btn => btn.remove());
 }
@@ -756,6 +905,17 @@ function removeDeleteButtons() {
   document.querySelectorAll(".delete-row-btn, .delete-col-btn").forEach(btn => btn.remove());
 }
 
+/**
+ * Charge les zones de tableau depuis un fichier XML
+ * @returns {Promise<Array>} Liste des zones avec leurs coordonnées
+ * 
+ * Cette fonction:
+ * 1. Récupère le fichier XML depuis le serveur
+ * 2. Parse le XML pour extraire les coordonnées
+ * 3. Convertit les coordonnées en objets zones utilisables
+ * 
+ * Format de retour: Array<{x: number, y: number, w: number, h: number}>
+ */
 async function loadZonesFromXML() {
   const response = await fetch("http://localhost:8000/static/table_structure.xml");
   const xmlText = await response.text();
@@ -783,8 +943,34 @@ async function loadZonesFromXML() {
   return zones;
 }
 
+ /**
+ * Initialise l'éditeur de zones sur l'image pour la sélection de zones de tableau
+ * @param {string} imageSrc - Source de l'image à éditer
+ * 
+ * Cette fonction met en place un éditeur interactif permettant de:
+ * - Afficher l'image dans un canvas
+ * - Dessiner et manipuler des zones de sélection
+ * - Gérer les interactions utilisateur (drag & drop, redimensionnement)
+ * - Sauvegarder les zones pour l'analyse OCR
+ * 
+ * Variables principales:
+ * - realImageSize: Dimensions réelles de l'image originale
+ * - canvas: Élément canvas pour le dessin
+ * - zones: Liste des zones de sélection
+ * - selectedZone: Zone actuellement sélectionnée
+ */
+/**
+ * Initialise l'éditeur de zones sur l'image
+ * @param {string} imageSrc - Source de l'image à éditer
+ * 
+ * Cette fonction met en place un éditeur interactif permettant de:
+ * - Afficher l'image dans un canvas
+ * - Dessiner et manipuler des zones de sélection
+ * - Gérer les interactions utilisateur (drag & drop, redimensionnement)
+ * - Sauvegarder les zones pour l'analyse OCR
+ */
 async function initializeZoneEditor(imageSrc) {
-  let realImageSize = { width: 0, height: 0 }; // 🟡 dimensions de l'image originale
+  let realImageSize = { width: 0, height: 0 }; // Dimensions de l'image originale
 
   const canvas = document.getElementById("zone-canvas");
   if (!canvas) {
